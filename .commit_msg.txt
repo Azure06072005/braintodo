@@ -1,0 +1,9 @@
+Core Setup & Architecture
+
+- Layered Architecture
+- FastAPI app instance, APIRouter
+- Lifespan events
+- Routing & Request Handling
+- Dependency Injection
+- Pydantic v2 Schemas
+- Working skeleton + Basic CRUD
