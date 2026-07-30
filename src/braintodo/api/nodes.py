@@ -1,4 +1,5 @@
 from functools import lru_cache
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -29,17 +30,17 @@ def close_default_store() -> None:
 
 
 @router.post("", response_model=Node, status_code=201)
-def create_node(data: NodeCreate, store: GraphStore = Depends(get_store)) -> Node:
+def create_node(data: NodeCreate, store: Annotated[GraphStore, Depends(get_store)]) -> Node:
     return store.create_node(data)
 
 
 @router.get("", response_model=list[Node])
-def list_nodes(store: GraphStore = Depends(get_store)) -> list[Node]:
+def list_nodes(store: Annotated[GraphStore, Depends(get_store)]) -> list[Node]:
     return store.list_nodes()
 
 
 @router.get("/{node_id}", response_model=Node)
-def get_node(node_id: str, store: GraphStore = Depends(get_store)) -> Node:
+def get_node(node_id: str, store: Annotated[GraphStore, Depends(get_store)]) -> Node:
     try:
         return store.get_node(node_id)
     except NodeNotFoundError as exc:
@@ -48,7 +49,7 @@ def get_node(node_id: str, store: GraphStore = Depends(get_store)) -> Node:
 
 @router.patch("/{node_id}", response_model=Node)
 def update_node(
-    node_id: str, data: NodeUpdate, store: GraphStore = Depends(get_store)
+    node_id: str, data: NodeUpdate, store: Annotated[GraphStore, Depends(get_store)]
 ) -> Node:
     try:
         return store.update_node(node_id, data)
@@ -57,7 +58,7 @@ def update_node(
 
 
 @router.delete("/{node_id}", status_code=204)
-def delete_node(node_id: str, store: GraphStore = Depends(get_store)) -> None:
+def delete_node(node_id: str, store: Annotated[GraphStore, Depends(get_store)]) -> None:
     try:
         store.delete_node(node_id)
     except NodeNotFoundError as exc:

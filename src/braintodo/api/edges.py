@@ -1,3 +1,5 @@
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, HTTPException
 
 from braintodo.api.nodes import get_store
@@ -8,7 +10,7 @@ router = APIRouter(prefix="/edges", tags=["edges"])
 
 
 @router.post("", response_model=Edge, status_code=201)
-def create_edge(data: EdgeCreate, store: GraphStore = Depends(get_store)) -> Edge:
+def create_edge(data: EdgeCreate, store: Annotated[GraphStore, Depends(get_store)]) -> Edge:
     try:
         return store.create_edge(data)
     except NodeNotFoundError as exc:
@@ -18,12 +20,12 @@ def create_edge(data: EdgeCreate, store: GraphStore = Depends(get_store)) -> Edg
 
 
 @router.get("", response_model=list[Edge])
-def list_edges(store: GraphStore = Depends(get_store)) -> list[Edge]:
+def list_edges(store: Annotated[GraphStore, Depends(get_store)]) -> list[Edge]:
     return store.list_edges()
 
 
 @router.get("/{edge_id}", response_model=Edge)
-def get_edge(edge_id: str, store: GraphStore = Depends(get_store)) -> Edge:
+def get_edge(edge_id: str, store: Annotated[GraphStore, Depends(get_store)]) -> Edge:
     try:
         return store.get_edge(edge_id)
     except EdgeNotFoundError as exc:
@@ -32,7 +34,7 @@ def get_edge(edge_id: str, store: GraphStore = Depends(get_store)) -> Edge:
 
 @router.patch("/{edge_id}", response_model=Edge)
 def update_edge(
-    edge_id: str, data: EdgeUpdate, store: GraphStore = Depends(get_store)
+    edge_id: str, data: EdgeUpdate, store: Annotated[GraphStore, Depends(get_store)]
 ) -> Edge:
     try:
         return store.update_edge(edge_id, data)
@@ -41,7 +43,7 @@ def update_edge(
 
 
 @router.delete("/{edge_id}", status_code=204)
-def delete_edge(edge_id: str, store: GraphStore = Depends(get_store)) -> None:
+def delete_edge(edge_id: str, store: Annotated[GraphStore, Depends(get_store)]) -> None:
     try:
         store.delete_edge(edge_id)
     except EdgeNotFoundError as exc:

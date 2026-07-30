@@ -12,7 +12,7 @@ class InMemoryGraphStore:
     never as the application's real backend (see Neo4jGraphStore for that)."""
 
     def __init__(self) -> None:
-        self._graph = nx.MultiDiGraph()
+        self._graph: nx.MultiDiGraph = nx.MultiDiGraph()
 
     # -- Nodes --------------------------------------------------------
     def create_node(self, data: NodeCreate) -> Node:
