@@ -1,3 +1,4 @@
+import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -5,17 +6,22 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from braintodo.api import edges, nodes
+from braintodo.graph.migrations import run_migrations
+
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-    # Startup: nothing to eagerly connect - the Neo4j driver is created lazily
-    # on first use (see api/nodes.py::_default_store), so a missing/unreachable
-    # database doesn't prevent the app from booting.
+    # Best-effort - a missing/unreachable database at boot time shouldn't
+    # prevent the app from starting; requests will just fail until it's back.
+    try:
+        store = nodes._default_store()
+        await run_migrations(store._driver)
+    except Exception:
+        logger.warning("Could not run Neo4j migrations at startup", exc_info=True)
     yield
-    # Shutdown: close the Neo4j driver if one was ever created, so the
-    # connection pool doesn't leak past process lifetime.
-    nodes.close_default_store()
+    await nodes.close_default_store()
 
 
 app = FastAPI(

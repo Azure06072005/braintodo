@@ -1,50 +1,61 @@
-from typing import Annotated
-
 from fastapi import APIRouter, Depends, HTTPException
 
 from braintodo.api.nodes import get_store
 from braintodo.graph.base import EdgeNotFoundError, GraphStore, NodeNotFoundError
+from braintodo.graph.repository import EdgeRepository, Page
 from braintodo.models.edge import Edge, EdgeCreate, EdgeUpdate
 
 router = APIRouter(prefix="/edges", tags=["edges"])
 
 
+def get_edge_repository(store: GraphStore = Depends(get_store)) -> EdgeRepository:
+    return EdgeRepository(store)
+
+
 @router.post("", response_model=Edge, status_code=201)
-def create_edge(data: EdgeCreate, store: Annotated[GraphStore, Depends(get_store)]) -> Edge:
+async def create_edge(
+    data: EdgeCreate, repo: EdgeRepository = Depends(get_edge_repository)
+) -> Edge:
     try:
-        return store.create_edge(data)
+        return await repo.create(data)
     except NodeNotFoundError as exc:
-        # Creating an edge against a non-existent node is a bad request from
-        # the caller (missing endpoint), not a missing-edge-resource lookup.
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
-@router.get("", response_model=list[Edge])
-def list_edges(store: Annotated[GraphStore, Depends(get_store)]) -> list[Edge]:
-    return store.list_edges()
+@router.get("", response_model=Page[Edge])
+async def list_edges(
+    skip: int = 0,
+    limit: int = 20,
+    repo: EdgeRepository = Depends(get_edge_repository),
+) -> Page[Edge]:
+    return await repo.list_paginated(skip, limit)
 
 
 @router.get("/{edge_id}", response_model=Edge)
-def get_edge(edge_id: str, store: Annotated[GraphStore, Depends(get_store)]) -> Edge:
+async def get_edge(
+    edge_id: str, repo: EdgeRepository = Depends(get_edge_repository)
+) -> Edge:
     try:
-        return store.get_edge(edge_id)
+        return await repo.get(edge_id)
     except EdgeNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
 @router.patch("/{edge_id}", response_model=Edge)
-def update_edge(
-    edge_id: str, data: EdgeUpdate, store: Annotated[GraphStore, Depends(get_store)]
+async def update_edge(
+    edge_id: str, data: EdgeUpdate, repo: EdgeRepository = Depends(get_edge_repository)
 ) -> Edge:
     try:
-        return store.update_edge(edge_id, data)
+        return await repo.update(edge_id, data)
     except EdgeNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
 @router.delete("/{edge_id}", status_code=204)
-def delete_edge(edge_id: str, store: Annotated[GraphStore, Depends(get_store)]) -> None:
+async def delete_edge(
+    edge_id: str, repo: EdgeRepository = Depends(get_edge_repository)
+) -> None:
     try:
-        store.delete_edge(edge_id)
+        await repo.delete(edge_id)
     except EdgeNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
