@@ -1,7 +1,9 @@
+import asyncio
 from typing import Generic, TypeVar
 
 from pydantic import BaseModel
 
+from braintodo.embedding.base import EmbeddingProvider
 from braintodo.graph.base import GraphStore
 from braintodo.models.edge import Edge, EdgeCreate, EdgeUpdate
 from braintodo.models.node import Node, NodeCreate, NodeUpdate
@@ -45,14 +47,27 @@ class BaseRepository(Generic[T, CreateT, UpdateT]):
 
 
 class NodeRepository(BaseRepository[Node, NodeCreate, NodeUpdate]):
+    def __init__(self, store: GraphStore, embedder: EmbeddingProvider) -> None: 
+        super().__init__(store)
+        self._embedder = embedder
+
+    async def _compute_embedding(self, title: str, content: str) -> list[float]: 
+        return await asyncio.to_thread(self._embedder.embed, f"{title} {content}")
+
     async def create(self, data: NodeCreate) -> Node:
-        return await self._store.create_node(data)
+        node = await self._store.create_node(data)
+        embedding = await self._compute_embedding(node.title, node.content)
+        return await self._store.update_node(node.id, NodeUpdate(embedding=embedding))
 
     async def get(self, id: str) -> Node:
         return await self._store.get_node(id)
 
     async def update(self, id: str, data: NodeUpdate) -> Node:
-        return await self._store.update_node(id, data)
+        node = await self._store.update_node(id, data)
+        if data.title is not None or data.content is not None: 
+            embedding = await self._compute_embedding(node.title, node.content)
+            node = await self._store.update_node(id, NodeUpdate(embedding=embedding))
+        return node
 
     async def delete(self, id: str) -> None:
         await self._store.delete_node(id)
