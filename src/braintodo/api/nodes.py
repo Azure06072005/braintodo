@@ -2,6 +2,10 @@ from functools import lru_cache
 
 from fastapi import APIRouter, Depends, HTTPException
 
+from braintodo.embedding.base import EmbeddingProvider
+from braintodo.embedding.sentence_transformer_provider import (
+    get_sentence_transformer_provider,
+)
 from braintodo.graph.base import GraphStore, NodeNotFoundError
 from braintodo.graph.neo4j_store import Neo4jGraphStore
 from braintodo.graph.repository import NodeRepository, Page
@@ -21,8 +25,17 @@ def get_store() -> GraphStore:
     return _default_store()
 
 
-def get_node_repository(store: GraphStore = Depends(get_store)) -> NodeRepository:
-    return NodeRepository(store)
+def get_embedder() -> EmbeddingProvider:
+    """Real production embedding provider. Tests override this with
+    FakeEmbeddingProvider via app.dependency_overrides[get_embedder]."""
+    return get_sentence_transformer_provider()
+
+
+def get_node_repository(
+    store: GraphStore = Depends(get_store),
+    embedder: EmbeddingProvider = Depends(get_embedder),
+) -> NodeRepository:
+    return NodeRepository(store, embedder)
 
 
 async def close_default_store() -> None:
