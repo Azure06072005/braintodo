@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    # Startup: ensure Neo4j constraints/indexes exist (see graph/migrations.py).
     # Best-effort - a missing/unreachable database at boot time shouldn't
     # prevent the app from starting; requests will just fail until it's back.
     try:
@@ -21,6 +22,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     except Exception:
         logger.warning("Could not run Neo4j migrations at startup", exc_info=True)
     yield
+    # Shutdown: close the Neo4j driver if one was ever created, so the
+    # connection pool doesn't leak past process lifetime.
     await nodes.close_default_store()
 
 
