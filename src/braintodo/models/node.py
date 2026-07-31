@@ -20,6 +20,7 @@ class NodeUpdate(BaseModel):
     shape: str | None = None
     size: float | None = None
     embedding: list[float] | None = None
+    graph_embedding: list[float] | None = None
 
 class Node(BaseModel):
     id: str
@@ -31,3 +32,4 @@ class Node(BaseModel):
     shape: str = "circle"
     size: float = 10.0
     embedding: list[float] | None = None
+    graph_embedding: list[float] | None = None
