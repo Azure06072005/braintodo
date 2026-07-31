@@ -1,7 +1,8 @@
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from braintodo.api.nodes import get_store
+from braintodo.api.nodes import get_embedder, get_store
+from braintodo.embedding.fake_provider import FakeEmbeddingProvider
 from braintodo.graph.memory_store import InMemoryGraphStore
 from braintodo.main import app
 
@@ -9,7 +10,9 @@ from braintodo.main import app
 @pytest.fixture(autouse=True)
 def override_store():
     store = InMemoryGraphStore()
+    embedder = FakeEmbeddingProvider()
     app.dependency_overrides[get_store] = lambda: store
+    app.dependency_overrides[get_embedder] = lambda: embedder
     yield store
     app.dependency_overrides.clear()
 
@@ -29,6 +32,12 @@ async def test_create_and_get_node(client: AsyncClient) -> None:
     assert resp.status_code == 200
     assert resp.json()["title"] == "Idea 1"
 
+async def test_create_nod_includes_embedding(client: AsyncClient) -> None: 
+    resp = await client.post("/nodes", json={"title": "Idea 1", "content": "details"})
+    assert resp.status_code == 201
+    embedding = resp.json()["embedding"]
+    assert embedding is not None
+    assert len(embedding) > 0
 
 async def test_list_nodes_paginated(client: AsyncClient) -> None:
     for i in range(5):

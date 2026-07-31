@@ -19,7 +19,7 @@ class NodeUpdate(BaseModel):
     color: str | None = None
     shape: str | None = None
     size: float | None = None
-
+    embedding: list[float] | None = None
 
 class Node(BaseModel):
     id: str
@@ -30,3 +30,4 @@ class Node(BaseModel):
     color: str = "#4287f5"
     shape: str = "circle"
     size: float = 10.0
+    embedding: list[float] | None = None
