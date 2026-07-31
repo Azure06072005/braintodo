@@ -1,5 +1,6 @@
 from typing import Protocol
 
+
 class GraphEmbedder(Protocol): 
     """Backend-agnostic interface for computing graph-topology-aware node
     embeddings (GNN). Takes each node's own feature vector (the F004 text
@@ -14,4 +15,3 @@ class GraphEmbedder(Protocol):
         node_features: list[list[float]],
         edges: list[tuple[str, str]],
     ) -> dict[str, list[float]]: ... 
-    
