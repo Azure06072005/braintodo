@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from braintodo.api import edges, gnn, nodes
+from braintodo.api import edges, gnn, links, nodes
 from braintodo.graph.migrations import run_migrations
 
 logger = logging.getLogger(__name__)
@@ -13,17 +13,12 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    # Startup: ensure Neo4j constraints/indexes exist (see graph/migrations.py).
-    # Best-effort - a missing/unreachable database at boot time shouldn't
-    # prevent the app from starting; requests will just fail until it's back.
     try:
         store = nodes._default_store()
         await run_migrations(store._driver)
     except Exception:
         logger.warning("Could not run Neo4j migrations at startup", exc_info=True)
     yield
-    # Shutdown: close the Neo4j driver if one was ever created, so the
-    # connection pool doesn't leak past process lifetime.
     await nodes.close_default_store()
 
 
@@ -50,3 +45,4 @@ def health_check() -> dict[str, str]:
 app.include_router(nodes.router)
 app.include_router(edges.router)
 app.include_router(gnn.router)
+app.include_router(links.router)
