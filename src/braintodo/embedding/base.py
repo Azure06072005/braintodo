@@ -1,5 +1,6 @@
 from typing import Protocol
 
+
 class EmbeddingProvider(Protocol): 
     """Backend-agnostic interface for turning text into a vector embedding.
     Real implementation uses a Transformer model; tests use a deterministic

@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+.env
+gemini-progress.md
+claude-progress.md
+AGENTS.md
+feature_list.json
+init.sh
