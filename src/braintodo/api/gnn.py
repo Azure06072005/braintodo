@@ -13,20 +13,23 @@ router = APIRouter(prefix="/gnn", tags=["gnn"])
 # NOTE: if the text-embedding model is ever changed, this needs to change too.
 _TEXT_EMBEDDING_DIMENSION = 384
 
-def get_graph_embedder() -> GraphEmbedder: 
-     """Real production GNN. Tests override this with FakeGraphEmbedder via
+
+def get_graph_embedder() -> GraphEmbedder:
+    """Real production GNN. Tests override this with FakeGraphEmbedder via
     app.dependency_overrides[get_graph_embedder]."""
     return get_pyg_gcn_embedder(input_dimension=_TEXT_EMBEDDING_DIMENSION)
 
+
 def get_embedding_service(
-    store: GraphStore = Depends(get_store), 
+    store: GraphStore = Depends(get_store),
     embedder: GraphEmbedder = Depends(get_graph_embedder),
-) -> GraphEmbeddingService: 
+) -> GraphEmbeddingService:
     return GraphEmbeddingService(store, embedder)
+
 
 @router.post("/recompute")
 async def recompute_graph_embeddings(
     service: GraphEmbeddingService = Depends(get_embedding_service),
-) -> dict[str, int]: 
+) -> dict[str, int]:
     updated = await service.recompute_all()
     return {"updated": updated}
