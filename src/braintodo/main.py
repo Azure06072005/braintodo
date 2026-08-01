@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from braintodo.api import edges, gnn, links, nodes
+from braintodo.api import clusters, edges, gnn, links, nodes
 from braintodo.graph.migrations import run_migrations
 
 logger = logging.getLogger(__name__)
@@ -46,3 +46,4 @@ app.include_router(nodes.router)
 app.include_router(edges.router)
 app.include_router(gnn.router)
 app.include_router(links.router)
+app.include_router(clusters.router)
