@@ -1,8 +1,7 @@
-from sympy import nroots
-import math
-
 from braintodo.graph.base import GraphStore
 from braintodo.models.link_sugestion import LinkSugestion
+from braintodo.similarity import cosine_similarity
+
 
 def _consine_similarity(a: list[float], b: list[float]) -> float: 
     dot = sum(x * y for x, y in zip(a,b))
@@ -38,7 +37,7 @@ class LinkPredictionService:
                     continue
                 assert source.graph_embedding is not None
                 assert target.graph_embedding is not None
-                score = _consine_similarity(
+                score = cosine_similarity(
                     source.graph_embedding, target.graph_embedding
                 )
                 suggestions.append(

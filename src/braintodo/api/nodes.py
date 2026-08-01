@@ -10,6 +10,7 @@ from braintodo.graph.base import GraphStore, NodeNotFoundError
 from braintodo.graph.neo4j_store import Neo4jGraphStore
 from braintodo.graph.repository import NodeRepository, Page
 from braintodo.models.node import Node, NodeCreate, NodeUpdate
+from braintodo.realtime.manager import ConnectionManager, get_manager
 
 router = APIRouter(prefix="/nodes", tags=["nodes"])
 
@@ -47,9 +48,13 @@ async def close_default_store() -> None:
 
 @router.post("", response_model=Node, status_code=201)
 async def create_node(
-    data: NodeCreate, repo: NodeRepository = Depends(get_node_repository)
+    data: NodeCreate,
+    repo: NodeRepository = Depends(get_node_repository),
+    manager: ConnectionManager = Depends(get_manager),
 ) -> Node:
-    return await repo.create(data)
+    node =  await repo.create(data)
+    await manager.broadcast("node_created", node.model_dump())
+    return node
 
 
 @router.get("", response_model=Page[Node])
@@ -73,19 +78,27 @@ async def get_node(
 
 @router.patch("/{node_id}", response_model=Node)
 async def update_node(
-    node_id: str, data: NodeUpdate, repo: NodeRepository = Depends(get_node_repository)
+    node_id: str, 
+    data: NodeUpdate, 
+    repo: NodeRepository = Depends(get_node_repository),
+    manager: ConnectionManager = Depends(get_manager),
 ) -> Node:
     try:
-        return await repo.update(node_id, data)
-    except NodeNotFoundError as exc:
+        node = await repo.update(node_id, data)
+    except NodeNotFoundError as exc: 
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    await manager.broadcast("node_updated", node.model_dump())
+    return node
 
 
 @router.delete("/{node_id}", status_code=204)
 async def delete_node(
-    node_id: str, repo: NodeRepository = Depends(get_node_repository)
+    node_id: str, 
+    repo: NodeRepository = Depends(get_node_repository),
+    manager: ConnectionManager = Depends(get_manager),
 ) -> None:
     try:
         await repo.delete(node_id)
     except NodeNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    await manager.broadcast("node_deleted", {"id": node_id})
