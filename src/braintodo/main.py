@@ -21,10 +21,46 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     yield
     await nodes.close_default_store()
 
+tags_metadata = [
+    {
+        "name": "nodes",
+        "description": "CRUD cho idea node — tiêu đề, nội dung, tag, thuộc tính thị giác (color/shape/size).",
+    },
+    {
+        "name": "edges",
+        "description": "CRUD cho quan hệ (edge) giữa hai idea node.",
+    },
+    {
+        "name": "gnn",
+        "description": "Tính lại graph_embedding (32-d) cho toàn bộ node qua PyTorch Geometric GCN.",
+    },
+    {
+        "name": "links",
+        "description": "Gợi ý liên kết còn thiếu dựa trên cosine similarity của graph_embedding.",
+    },
+    {
+        "name": "clusters",
+        "description": "Phát hiện cụm chủ đề (community detection) bằng Louvain.",
+    },
+    {
+        "name": "analytics",
+        "description": "Chỉ số topology: degree, degree centrality, betweenness centrality, PageRank.",
+    },
+    {
+        "name": "realtime",
+        "description": "WebSocket cập nhật đồ thị theo thời gian thực.",
+    },
+    {
+        "name": "search",
+        "description": "Tìm kiếm kết hợp keyword + semantic similarity + mở rộng subgraph BFS.",
+    },
+]
 
 app = FastAPI(
     title="braintodo",
     description="GNN-Powered Idea Management API",
+    version="0.0.1",
+    openapi_tags=tags_metadata,
     lifespan=lifespan,
 )
 
