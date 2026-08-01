@@ -48,9 +48,13 @@ async def close_default_store() -> None:
 
 @router.post("", response_model=Node, status_code=201)
 async def create_node(
-    data: NodeCreate, repo: NodeRepository = Depends(get_node_repository)
+    data: NodeCreate,
+    repo: NodeRepository = Depends(get_node_repository),
+    manager: ConnectionManager = Depends(get_manager),
 ) -> Node:
-    return await repo.create(data)
+    node =  await repo.create(data)
+    await manager.broadcast("node_created", node.model_dump())
+    return node
 
 
 @router.get("", response_model=Page[Node])
