@@ -11,3 +11,6 @@ ignore = ["B008"]  # FastAPI's Depends() in argument defaults is idiomatic
 [tool.mypy]
 python_version = "3.12"
 ignore_missing_imports = true
+
+[tool.vercel]
+entrypoint = "src.braintodo.main:app"
