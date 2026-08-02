@@ -9,6 +9,10 @@ dependencies = [
     "uvicorn",
 ]
 
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 pythonpath = ["src"]
@@ -22,6 +26,12 @@ ignore = ["B008"]
 [tool.mypy]
 python_version = "3.12"
 ignore_missing_imports = true
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.vercel]
 entrypoint = "src.braintodo.main:app"
