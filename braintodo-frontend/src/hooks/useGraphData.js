@@ -1,55 +1,73 @@
+import { useEffect, useMemo, useState } from "react";
+import { createApiClient } from "../api/client";
+import {
+  mockNodes,
+  mockEdges,
+  mockClusters,
+  mockLinkSuggestions,
+} from "../data/mockData";
+
+const DEFAULT_API_BASE_URL = "http://localhost:8000";
+
 /**
- * Client mỏng gọi API braintodo thật. Endpoint khớp đúng với
- * Azure06072005/braintodo (đã xác nhận từ source code thật).
+ * source: "mock" | "live"
+ * Khi source === "live", gọi API thật; nếu lỗi (backend chưa chạy), tự
+ * fallback về mock + báo lỗi ra `error`, không crash UI.
  */
+export function useGraphData(source, apiBaseUrl = DEFAULT_API_BASE_URL) {
+  const [nodes, setNodes] = useState(mockNodes);
+  const [edges, setEdges] = useState(mockEdges);
+  const [clusters, setClusters] = useState(mockClusters);
+  const [linkSuggestions, setLinkSuggestions] = useState(mockLinkSuggestions);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-export function createApiClient(baseUrl) {
-  async function getJson(path) {
-    const resp = await fetch(`${baseUrl}${path}`);
-    if (!resp.ok) {
-      throw new Error(`${path} -> HTTP ${resp.status}`);
+  const client = useMemo(() => createApiClient(apiBaseUrl), [apiBaseUrl]);
+
+  useEffect(() => {
+    if (source === "mock") {
+      setNodes(mockNodes);
+      setEdges(mockEdges);
+      setClusters(mockClusters);
+      setLinkSuggestions(mockLinkSuggestions);
+      setError(null);
+      return;
     }
-    return resp.json();
-  }
 
-  return {
-    async listNodes({ skip = 0, limit = 200 } = {}) {
-      const page = await getJson(`/nodes?skip=${skip}&limit=${limit}`);
-      return page.items; // backend trả Page[Node]: {items, total, skip, limit}
-    },
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
 
-    async listEdges({ skip = 0, limit = 500 } = {}) {
-      const page = await getJson(`/edges?skip=${skip}&limit=${limit}`);
-      return page.items;
-    },
+    Promise.all([
+      client.listNodes(),
+      client.listEdges(),
+      client.getClusters(),
+      client.getLinkSuggestions(20),
+    ])
+      .then(([liveNodes, liveEdges, liveClusters, liveSuggestions]) => {
+        if (cancelled) return;
+        setNodes(liveNodes);
+        setEdges(liveEdges);
+        setClusters(liveClusters);
+        setLinkSuggestions(liveSuggestions);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setError(err.message);
+        // Fallback về mock để UI không trống trơn khi backend chưa chạy.
+        setNodes(mockNodes);
+        setEdges(mockEdges);
+        setClusters(mockClusters);
+        setLinkSuggestions(mockLinkSuggestions);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
 
-    async getClusters() {
-      return getJson("/clusters");
-    },
+    return () => {
+      cancelled = true;
+    };
+  }, [source, client]);
 
-    async getLinkSuggestions(limit = 10) {
-      return getJson(`/links/suggestions?limit=${limit}`);
-    },
-
-    async getTopology() {
-      return getJson("/analytics/topology");
-    },
-
-    async search(q, { limit = 10, depth = 1 } = {}) {
-      return getJson(`/search?q=${encodeURIComponent(q)}&limit=${limit}&depth=${depth}`);
-    },
-
-    connectRealtime(onEvent) {
-      const wsUrl = baseUrl.replace(/^http/, "ws") + "/ws";
-      const socket = new WebSocket(wsUrl);
-      socket.onmessage = (msg) => {
-        try {
-          onEvent(JSON.parse(msg.data));
-        } catch {
-          // bỏ qua message không parse được (không phải JSON hợp lệ)
-        }
-      };
-      return () => socket.close();
-    },
-  };
+  return { nodes, edges, clusters, linkSuggestions, loading, error };
 }
