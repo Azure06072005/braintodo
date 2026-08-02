@@ -1,3 +1,14 @@
+[project]
+name = "braintodo"
+version = "0.1.0"
+description = "BrainTodo API"
+requires-python = ">=3.12"
+
+dependencies = [
+    "fastapi",
+    "uvicorn",
+]
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 pythonpath = ["src"]
@@ -6,7 +17,7 @@ pythonpath = ["src"]
 line-length = 100
 
 [tool.ruff.lint]
-ignore = ["B008"]  # FastAPI's Depends() in argument defaults is idiomatic
+ignore = ["B008"]
 
 [tool.mypy]
 python_version = "3.12"
