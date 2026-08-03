@@ -7,12 +7,27 @@ const STATUS_LABEL = {
   disconnected: null,
 };
 
-export default function TopBar({ source, onSourceChange, loading, error, realtimeStatus }) {
+export default function TopBar({
+  source,
+  onSourceChange,
+  loading,
+  error,
+  realtimeStatus,
+  onNewNode,
+  onNewEdge,
+}) {
   const statusInfo = STATUS_LABEL[realtimeStatus];
 
   return (
     <div style={styles.bar}>
       <span style={{ fontSize: 14, fontWeight: 500, color: theme.textPrimary }}>braintodo</span>
+
+      <button onClick={onNewNode} style={styles.newBtn}>
+        + Ý tưởng mới
+      </button>
+      <button onClick={onNewEdge} style={styles.newBtn}>
+        + Liên kết
+      </button>
 
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginLeft: "auto" }}>
         {statusInfo && (
@@ -76,6 +91,16 @@ const styles = {
     fontWeight: 500,
     padding: "5px 12px",
     borderRadius: 5,
+    cursor: "pointer",
+  },
+  newBtn: {
+    marginLeft: 16,
+    background: "transparent",
+    border: `1px solid ${theme.panelBorder}`,
+    borderRadius: 6,
+    padding: "5px 12px",
+    fontSize: 12.5,
+    color: theme.textSecondary,
     cursor: "pointer",
   },
 };
