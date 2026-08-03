@@ -11,7 +11,14 @@ function relatedSuggestions(linkSuggestions, nodeId) {
   );
 }
 
-export default function NodeDetailPanel({ node, clusters, linkSuggestions, allNodesById }) {
+export default function NodeDetailPanel({
+  node,
+  clusters,
+  linkSuggestions,
+  allNodesById,
+  onEdit,
+  onDelete,
+}) {
   if (!node) {
     return (
       <div style={styles.panel}>
@@ -41,6 +48,15 @@ export default function NodeDetailPanel({ node, clusters, linkSuggestions, allNo
         <h2 style={{ fontSize: 15, fontWeight: 500, color: theme.textPrimary, margin: 0 }}>
           {node.title}
         </h2>
+      </div>
+
+      <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+        <button onClick={() => onEdit(node)} style={styles.actionBtn}>
+          Sửa
+        </button>
+        <button onClick={() => onDelete(node)} style={{ ...styles.actionBtn, color: "#d85a30" }}>
+          Xoá
+        </button>
       </div>
 
       <p style={{ fontSize: 13, color: theme.textSecondary, lineHeight: 1.6 }}>
@@ -146,5 +162,14 @@ const styles = {
     background: "#1c2029",
     borderRadius: 4,
     padding: "2px 8px",
+  },
+  actionBtn: {
+    background: "transparent",
+    border: `1px solid ${theme.panelBorder}`,
+    borderRadius: 6,
+    padding: "5px 12px",
+    fontSize: 12.5,
+    color: theme.textSecondary,
+    cursor: "pointer",
   },
 };
