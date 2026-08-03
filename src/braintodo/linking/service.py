@@ -1,15 +1,7 @@
 from braintodo.graph.base import GraphStore
-from braintodo.models.link_sugestion import LinkSugestion
+from braintodo.models.link_suggestion import LinkSuggestion
 from braintodo.similarity import cosine_similarity
 
-
-def _consine_similarity(a: list[float], b: list[float]) -> float: 
-    dot = sum(x * y for x, y in zip(a,b))
-    norm_a = math.sqrt(sum(x * x for x in a))
-    norm_b = math.sqrt(sum(x * x for x in b))
-    if norm_a == 0.0 or norm_b == 0.0: 
-        return 0.0
-    return dot / (norm_a * norm_b)
 
 class LinkPredictionService: 
     """Suggests missing edges by ranking node pairs on the cosine similarity
@@ -20,7 +12,7 @@ class LinkPredictionService:
     def __init__(self, store: GraphStore) -> None: 
         self._store = store
 
-    async def suggest_links(self, limit: int = 10) -> list[LinkSugestion]: 
+    async def suggest_links(self, limit: int = 10) -> list[LinkSuggestion]: 
         nodes = await self._store.list_nodes() 
         edges = await self._store.list_edges()
 
@@ -30,7 +22,7 @@ class LinkPredictionService:
             frozenset((e.source_id, e.target_id)) for e in edges
         }
 
-        suggestions: list[LinkSugestion] = []
+        suggestions: list[LinkSuggestion] = []
         for i, source in enumerate(eligible): 
             for target in eligible[i + 1 :]: 
                 if frozenset((source.id, target.id)) in existing_pairs: 
@@ -41,7 +33,7 @@ class LinkPredictionService:
                     source.graph_embedding, target.graph_embedding
                 )
                 suggestions.append(
-                    LinkSugestion(
+                    LinkSuggestion(
                         source_id=source.id, target_id=target.id, score=score
                     )
                 )
