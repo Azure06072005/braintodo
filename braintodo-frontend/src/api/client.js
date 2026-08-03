@@ -39,9 +39,13 @@ export function createApiClient(baseUrl) {
       return getJson(`/search?q=${encodeURIComponent(q)}&limit=${limit}&depth=${depth}`);
     },
 
-    connectRealtime(onEvent) {
+    connectRealtime(onEvent, { onStatusChange } = {}) {
       const wsUrl = baseUrl.replace(/^http/, "ws") + "/ws";
       const socket = new WebSocket(wsUrl);
+
+      socket.onopen = () => onStatusChange?.("open");
+      socket.onclose = () => onStatusChange?.("closed");
+      socket.onerror = () => onStatusChange?.("error");
       socket.onmessage = (msg) => {
         try {
           onEvent(JSON.parse(msg.data));
