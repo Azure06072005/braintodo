@@ -10,6 +10,7 @@ tests/
 .env
 AGENTS.md
 feature_list.json
+featurefe_list.json
 claude-progress.md
 gemini-progress.md
 init.sh
