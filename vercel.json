@@ -1,0 +1,11 @@
+{
+  "buildCommand": "cd braintodo-frontend && npm install && npm run build",
+  "outputDirectory": "braintodo-frontend/dist",
+  "framework": "vite",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/"
+    }
+  ]
+}
