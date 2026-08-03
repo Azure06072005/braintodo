@@ -134,5 +134,90 @@ export function useGraphData(source, apiBaseUrl = DEFAULT_API_BASE_URL) {
     loading,
     error,
     realtimeStatus, // "disconnected" | "open" | "closed" | "error"
+
+    // --- Mutations ---
+    // Ở chế độ mock: sửa state cục bộ trực tiếp, không gọi mạng.
+    // Ở chế độ live: gọi API thật; state cũng được cập nhật ngay từ response
+    // (không đợi WebSocket dội lại) để UI phản hồi tức thì — event WS đến
+    // sau chỉ là upsert trùng, vô hại vì upsertById là idempotent.
+    async createNode(data) {
+      if (source === "mock") {
+        const node = { id: crypto.randomUUID(), embedding: null, graph_embedding: null, ...data };
+        setNodes((prev) => [...prev, node]);
+        return node;
+      }
+      const node = await client.createNode(data);
+      setNodes((prev) => upsertById(prev, node));
+      return node;
+    },
+
+    async updateNode(nodeId, data) {
+      if (source === "mock") {
+        let updated = null;
+        setNodes((prev) =>
+          prev.map((n) => {
+            if (n.id !== nodeId) return n;
+            updated = { ...n, ...data };
+            return updated;
+          })
+        );
+        return updated;
+      }
+      const node = await client.updateNode(nodeId, data);
+      setNodes((prev) => upsertById(prev, node));
+      return node;
+    },
+
+    async deleteNode(nodeId) {
+      if (source === "mock") {
+        setNodes((prev) => removeById(prev, nodeId));
+        setEdges((prev) => prev.filter((e) => e.source_id !== nodeId && e.target_id !== nodeId));
+        return;
+      }
+      await client.deleteNode(nodeId);
+      setNodes((prev) => removeById(prev, nodeId));
+    },
+
+    async createEdge(data) {
+      if (source === "mock") {
+        const sourceExists = nodes.some((n) => n.id === data.source_id);
+        const targetExists = nodes.some((n) => n.id === data.target_id);
+        if (!sourceExists || !targetExists) {
+          throw new Error("source_id hoặc target_id không tồn tại");
+        }
+        const edge = { id: crypto.randomUUID(), ...data };
+        setEdges((prev) => [...prev, edge]);
+        return edge;
+      }
+      const edge = await client.createEdge(data);
+      setEdges((prev) => upsertById(prev, edge));
+      return edge;
+    },
+
+    async updateEdge(edgeId, data) {
+      if (source === "mock") {
+        let updated = null;
+        setEdges((prev) =>
+          prev.map((e) => {
+            if (e.id !== edgeId) return e;
+            updated = { ...e, ...data };
+            return updated;
+          })
+        );
+        return updated;
+      }
+      const edge = await client.updateEdge(edgeId, data);
+      setEdges((prev) => upsertById(prev, edge));
+      return edge;
+    },
+
+    async deleteEdge(edgeId) {
+      if (source === "mock") {
+        setEdges((prev) => removeById(prev, edgeId));
+        return;
+      }
+      await client.deleteEdge(edgeId);
+      setEdges((prev) => removeById(prev, edgeId));
+    },
   };
 }
