@@ -2,13 +2,14 @@ import { useEffect, useRef } from "react";
 import * as d3 from "d3";
 import { theme } from "../theme";
 
-export default function GraphCanvas({ 
-  nodes, 
-  edges, 
-  onNodeClick, 
+export default function GraphCanvas({
+  nodes,
+  edges,
+  onNodeClick,
   selectedNodeId,
-  highlightNodeIds,
-  matchNodeIds, 
+  highlightNodeIds, // Set|null — khi có, node ngoài set bị làm mờ
+  matchNodeIds, // Set|null — subset của highlightNodeIds khớp trực tiếp từ khoá, viền vàng
+  topology, // Map<node_id, NodeTopology>|null — khi có, scale bán kính theo pagerank
 }) {
   const svgRef = useRef(null);
   const simRef = useRef(null);
@@ -20,13 +21,32 @@ export default function GraphCanvas({
     const width = svgRef.current.clientWidth || 800;
     const height = svgRef.current.clientHeight || 600;
 
-    // d3.forceSimulation mutates node/edge objects (thêm x, y, vx, vy) — dùng
-    // bản sao nông để không đụng vào state gốc do React quản lý.
     const nodeData = nodes.map((n) => ({ ...n }));
     const nodeById = new Map(nodeData.map((n) => [n.id, n]));
     const edgeData = edges
       .filter((e) => nodeById.has(e.source_id) && nodeById.has(e.target_id))
       .map((e) => ({ ...e, source: e.source_id, target: e.target_id }));
+
+    // Overlay topology (FE010): bán kính hiển thị = size gốc, phóng to theo
+    // pagerank chuẩn hoá (0..1 trong tập node hiện tại) — không sửa `size`
+    // gốc của node (đó là thuộc tính do người dùng đặt), chỉ ảnh hưởng lúc vẽ.
+    const maxPagerank = topology ? Math.max(...[...topology.values()].map((t) => t.pagerank)) : 0;
+    function effectiveRadius(d) {
+      const base = d.size || 10;
+      if (!topology || maxPagerank === 0) return base;
+      const t = topology.get(d.id);
+      if (!t) return base;
+      const normalized = t.pagerank / maxPagerank;
+      return base * (0.7 + normalized * 1.1);
+    }
+    const topPagerankIds = topology
+      ? new Set(
+          [...topology.entries()]
+            .sort((a, b) => b[1].pagerank - a[1].pagerank)
+            .slice(0, 3)
+            .map(([id]) => id)
+        )
+      : new Set();
 
     const zoomLayer = svg.append("g");
     svg.call(
@@ -80,13 +100,12 @@ export default function GraphCanvas({
 
     nodeSel
       .append(function (d) {
-        // Node.shape từ backend quyết định hình vẽ: "square" -> rect, còn lại -> circle.
         const tag = d.shape === "square" ? "rect" : "circle";
         return document.createElementNS("http://www.w3.org/2000/svg", tag);
       })
       .each(function (d) {
         const el = d3.select(this);
-        const r = d.size || 10;
+        const r = effectiveRadius(d);
         if (d.shape === "square") {
           el.attr("x", -r).attr("y", -r).attr("width", r * 2).attr("height", r * 2).attr("rx", 4);
         } else {
@@ -94,46 +113,56 @@ export default function GraphCanvas({
         }
       })
       .attr("fill", (d) => d.color || theme.accent)
-      .attr("stroke", (d) => (d.id === selectedNodeId ? "#ffffff" : theme.canvasBg))
-      .attr("stroke-width", (d) => (d.id === selectedNodeId ? 2.5 : 2))
-      .on("click", (event, d) => onNodeClick(d.id));
-
-    nodeSel
-      .append("text")
-      .text((d) => d.title)
-      .attr("x", (d) => (d.size || 10) + 6)
-      .attr("y", 4)
-      .attr("fill", theme.textSecondary)
-      .style("font-size", "11px")
-      .style("font-family", "sans-serif")
-      .style("pointer-events", "none");
-
-    nodeSel
-      // ...
       .attr("stroke", (d) =>
-        matchNodeIds?.has(d.id)
+        topPagerankIds.has(d.id)
+          ? theme.importantRing
+          : matchNodeIds?.has(d.id)
           ? "#e5b93f"
           : d.id === selectedNodeId
           ? "#ffffff"
           : theme.canvasBg
       )
       .attr("stroke-width", (d) =>
-        matchNodeIds?.has(d.id) ? 3 : d.id === selectedNodeId ? 2.5 : 2
+        topPagerankIds.has(d.id) || matchNodeIds?.has(d.id)
+          ? 3
+          : d.id === selectedNodeId
+          ? 2.5
+          : 2
       )
       .attr("opacity", (d) => (highlightNodeIds && !highlightNodeIds.has(d.id) ? 0.25 : 1))
       .on("click", (event, d) => onNodeClick(d.id));
 
+    // Tooltip native của trình duyệt (hover) hiển thị chỉ số topology —
+    // không cần thêm thư viện tooltip riêng cho việc này.
+    if (topology) {
+      nodeSel.append("title").text((d) => {
+        const t = topology.get(d.id);
+        if (!t) return d.title;
+        return (
+          `${d.title}\n` +
+          `PageRank: ${t.pagerank.toFixed(3)}\n` +
+          `Degree: ${t.degree} (centrality ${t.degree_centrality.toFixed(2)})\n` +
+          `Betweenness: ${t.betweenness_centrality.toFixed(3)}`
+        );
+      });
+    }
+
     nodeSel
       .append("text")
-      // ...
+      .text((d) => d.title)
+      .attr("x", (d) => effectiveRadius(d) + 6)
+      .attr("y", 4)
+      .attr("fill", theme.textSecondary)
       .attr("opacity", (d) => (highlightNodeIds && !highlightNodeIds.has(d.id) ? 0.25 : 1))
-      // ...
+      .style("font-size", "11px")
+      .style("font-family", "sans-serif")
+      .style("pointer-events", "none");
 
     linkSel.attr("opacity", (d) =>
       highlightNodeIds && !(highlightNodeIds.has(d.source_id) && highlightNodeIds.has(d.target_id))
         ? 0.15
         : 1
-    );  
+    );
 
     const simulation = d3
       .forceSimulation(nodeData)
@@ -149,7 +178,7 @@ export default function GraphCanvas({
       .force("center", d3.forceCenter(width / 2, height / 2))
       .force(
         "collide",
-        d3.forceCollide((d) => (d.size || 10) + 28)
+        d3.forceCollide((d) => effectiveRadius(d) + 28)
       )
       .on("tick", () => {
         linkSel
@@ -179,7 +208,7 @@ export default function GraphCanvas({
       simulation.stop();
       timer.stop();
     };
-  }, [nodes, edges, onNodeClick, selectedNodeId]);
+  }, [nodes, edges, onNodeClick, selectedNodeId, highlightNodeIds, matchNodeIds, topology]);
 
   return (
     <svg

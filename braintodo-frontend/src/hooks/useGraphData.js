@@ -7,6 +7,7 @@ import {
   mockLinkSuggestions,
 } from "../data/mockData";
 import { mockSearch } from "../search/mockSearch";
+import { computeMockTopology } from "../analytics/mockTopology";
 
 const DEFAULT_API_BASE_URL = "http://localhost:8000";
 
@@ -227,6 +228,13 @@ export function useGraphData(source, apiBaseUrl = DEFAULT_API_BASE_URL) {
         return mockSearch(nodes, edges, q, options);
       }
       return client.search(q, options);
+    },
+
+    async getTopology() {
+      if (source === "mock") {
+        return computeMockTopology(nodes, edges);
+      }
+      return client.getTopology();
     }
   };
 }
