@@ -18,6 +18,7 @@ export default function NodeDetailPanel({
   allNodesById,
   onEdit,
   onDelete,
+  topology,
 }) {
   if (!node) {
     return (
@@ -102,6 +103,24 @@ export default function NodeDetailPanel({
           <Muted>Chưa thuộc cụm nào (chưa chạy /clusters, hoặc node cô lập)</Muted>
         )}
       </Section>
+
+      {topology && (
+        <Section title="Topology">
+          {topology.get(node.id) ? (
+            <>
+              <Row label="Degree" value={topology.get(node.id).degree} />
+              <Row label="Degree centrality" value={topology.get(node.id).degree_centrality.toFixed(3)} />
+              <Row
+                label="Betweenness centrality"
+                value={topology.get(node.id).betweenness_centrality.toFixed(3)}
+              />
+              <Row label="PageRank" value={topology.get(node.id).pagerank.toFixed(3)} />
+            </>
+          ) : (
+            <Muted>Chưa có số liệu cho node này</Muted>
+          )}
+        </Section>
+      )}
 
       <Section title="Gợi ý liên kết liên quan">
         {suggestions.length > 0 ? (
