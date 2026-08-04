@@ -20,26 +20,29 @@ export default function TopBar({
   topologyLoading,
   clusterOverlayEnabled,
   onToggleClusterOverlay,
+  onTogglePanel,
 }) {
   const statusInfo = STATUS_LABEL[realtimeStatus];
 
   return (
-    <div style={styles.bar}>
+    <div className="bt-topbar" style={styles.bar}>
       <span style={{ fontSize: 14, fontWeight: 500, color: theme.textPrimary }}>braintodo</span>
 
-      <button onClick={onNewNode} style={styles.newBtn}>
+      <button className="bt-btn" onClick={onNewNode} style={styles.newBtn}>
         + Ý tưởng mới
       </button>
-      <button onClick={onNewEdge} style={styles.newBtn}>
+      <button className="bt-btn" onClick={onNewEdge} style={styles.newBtn}>
         + Liên kết
       </button>
       <button
+        className="bt-btn"
         onClick={onToggleTopology}
         style={topologyEnabled ? { ...styles.newBtn, ...styles.newBtnActive } : styles.newBtn}
       >
         {topologyLoading ? "Đang tính…" : "Độ quan trọng"}
       </button>
       <button
+        className="bt-btn"
         onClick={onToggleClusterOverlay}
         style={
           clusterOverlayEnabled ? { ...styles.newBtn, ...styles.newBtnActive } : styles.newBtn
@@ -48,7 +51,14 @@ export default function TopBar({
         Cụm ý tưởng
       </button>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginLeft: "auto" }}>
+      {/* Chỉ có tác dụng ở màn hình hẹp — mở panel chi tiết dạng drawer.
+          Ẩn qua CSS (không phải JS) để logic đơn giản, panel luôn nhận được
+          class "mở" từ App, chỉ là trên desktop panel vốn đã hiện sẵn. */}
+      <button className="bt-btn bt-panel-toggle" onClick={onTogglePanel} style={styles.newBtn}>
+        Chi tiết
+      </button>
+
+      <div className="bt-topbar-actions" style={{ display: "flex", alignItems: "center", gap: 10, marginLeft: "auto" }}>
         {statusInfo && (
           <span style={{ fontSize: 12, color: statusInfo.color }}>{statusInfo.text}</span>
         )}
@@ -61,12 +71,14 @@ export default function TopBar({
 
         <div style={styles.toggleGroup}>
           <button
+            className="bt-btn"
             onClick={() => onSourceChange("mock")}
             style={source === "mock" ? styles.toggleActive : styles.toggle}
           >
             Mock
           </button>
           <button
+            className="bt-btn"
             onClick={() => onSourceChange("live")}
             style={source === "live" ? styles.toggleActive : styles.toggle}
           >
