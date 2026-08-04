@@ -10,6 +10,7 @@ export default function GraphCanvas({
   highlightNodeIds, // Set|null — khi có, node ngoài set bị làm mờ
   matchNodeIds, // Set|null — subset của highlightNodeIds khớp trực tiếp từ khoá, viền vàng
   topology, // Map<node_id, NodeTopology>|null — khi có, scale bán kính theo pagerank
+  clusters, // Cluster[]|null — khi có, vẽ vùng nền theo cluster_id (FE011)
 }) {
   const svgRef = useRef(null);
   const simRef = useRef(null);
@@ -54,6 +55,28 @@ export default function GraphCanvas({
         zoomLayer.attr("transform", event.transform);
       })
     );
+
+    // Vùng nền cụm (FE011) — append TRƯỚC edges/nodes để luôn nằm dưới cùng.
+    const hullG = zoomLayer.append("g");
+    const hullPaths = hullG
+      .selectAll("path")
+      .data(clusters || [], (d) => d.cluster_id)
+      .join("path")
+      .attr("fill", (d) => theme.clusterPalette[d.cluster_id % theme.clusterPalette.length])
+      .attr("fill-opacity", 0.1)
+      .attr("stroke", (d) => theme.clusterPalette[d.cluster_id % theme.clusterPalette.length])
+      .attr("stroke-opacity", 0.4)
+      .attr("stroke-width", 1.5);
+    const hullLabels = hullG
+      .selectAll("text")
+      .data(clusters || [], (d) => d.cluster_id)
+      .join("text")
+      .text((d) => `Cụm ${d.cluster_id}`)
+      .attr("fill", (d) => theme.clusterPalette[d.cluster_id % theme.clusterPalette.length])
+      .style("font-size", "10.5px")
+      .style("font-weight", 600)
+      .style("font-family", "sans-serif")
+      .style("pointer-events", "none");
 
     const linkSel = zoomLayer
       .append("g")
@@ -132,8 +155,6 @@ export default function GraphCanvas({
       .attr("opacity", (d) => (highlightNodeIds && !highlightNodeIds.has(d.id) ? 0.25 : 1))
       .on("click", (event, d) => onNodeClick(d.id));
 
-    // Tooltip native của trình duyệt (hover) hiển thị chỉ số topology —
-    // không cần thêm thư viện tooltip riêng cho việc này.
     if (topology) {
       nodeSel.append("title").text((d) => {
         const t = topology.get(d.id);
@@ -164,6 +185,44 @@ export default function GraphCanvas({
         : 1
     );
 
+    // Tính path bao quanh 1 cụm theo vị trí node HIỆN TẠI trong simulation.
+    // <3 node -> không dựng được convex hull -> vẽ hình tròn đệm quanh tâm.
+    function hullPathFor(cluster) {
+      const pts = cluster.node_ids
+        .map((id) => nodeById.get(id))
+        .filter(Boolean)
+        .map((p) => [p.x, p.y]);
+      if (pts.length === 0) return "";
+
+      if (pts.length < 3) {
+        const cx = d3.mean(pts, (p) => p[0]);
+        const cy = d3.mean(pts, (p) => p[1]);
+        const maxDist = Math.max(0, ...pts.map((p) => Math.hypot(p[0] - cx, p[1] - cy)));
+        const r = maxDist + 36;
+        return `M ${cx - r},${cy} a ${r},${r} 0 1,0 ${r * 2},0 a ${r},${r} 0 1,0 ${-r * 2},0`;
+      }
+
+      const hull = d3.polygonHull(pts);
+      if (!hull) return "";
+      const centroid = d3.polygonCentroid(hull);
+      const padded = hull.map(([x, y]) => {
+        const dx = x - centroid[0];
+        const dy = y - centroid[1];
+        const len = Math.hypot(dx, dy) || 1;
+        const pad = 30;
+        return [x + (dx / len) * pad, y + (dy / len) * pad];
+      });
+      return "M" + padded.map((p) => p.join(",")).join("L") + "Z";
+    }
+
+    function labelPosFor(cluster) {
+      const pts = cluster.node_ids.map((id) => nodeById.get(id)).filter(Boolean);
+      if (pts.length === 0) return [0, 0];
+      const cx = d3.mean(pts, (p) => p.x);
+      const topY = Math.min(...pts.map((p) => p.y));
+      return [cx, topY - 44];
+    }
+
     const simulation = d3
       .forceSimulation(nodeData)
       .force(
@@ -187,6 +246,10 @@ export default function GraphCanvas({
           .attr("x2", (d) => d.target.x)
           .attr("y2", (d) => d.target.y);
         nodeSel.attr("transform", (d) => `translate(${d.x},${d.y})`);
+        if (clusters) {
+          hullPaths.attr("d", hullPathFor);
+          hullLabels.attr("x", (d) => labelPosFor(d)[0]).attr("y", (d) => labelPosFor(d)[1]);
+        }
       });
 
     simRef.current = simulation;
@@ -208,7 +271,7 @@ export default function GraphCanvas({
       simulation.stop();
       timer.stop();
     };
-  }, [nodes, edges, onNodeClick, selectedNodeId, highlightNodeIds, matchNodeIds, topology]);
+  }, [nodes, edges, onNodeClick, selectedNodeId, highlightNodeIds, matchNodeIds, topology, clusters]);
 
   return (
     <svg

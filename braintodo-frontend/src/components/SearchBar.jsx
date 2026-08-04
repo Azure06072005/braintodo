@@ -35,7 +35,7 @@ export default function SearchBar({ onSearch, onClear, onSelectMatch, result, se
       </form>
 
       {result && (
-        <div style={styles.dropdown}>
+        <div className="bt-search-dropdown" style={styles.dropdown}>
           {result.matches.length === 0 ? (
             <p style={{ fontSize: 12.5, color: theme.textMuted, margin: "8px 12px" }}>
               Không tìm thấy ý tưởng nào khớp.

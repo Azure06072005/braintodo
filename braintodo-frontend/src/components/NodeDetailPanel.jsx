@@ -19,10 +19,14 @@ export default function NodeDetailPanel({
   onEdit,
   onDelete,
   topology,
+  panelOpen, 
+  onClosePanel,
 }) {
+  const panelClass = `bt-detail-panel${panelOpen ? " bt-panel-open" : ""}`;
+
   if (!node) {
     return (
-      <div style={styles.panel}>
+      <div className={panelClass} style={styles.panel}>
         <p style={{ color: theme.textMuted, fontSize: 13 }}>
           Chọn một node trên đồ thị để xem chi tiết.
         </p>
@@ -34,7 +38,11 @@ export default function NodeDetailPanel({
   const suggestions = relatedSuggestions(linkSuggestions, node.id);
 
   return (
-    <div style={styles.panel}>
+    <div className={panelClass} style={styles.panel}>
+      <button className="bt-btn bt-panel-toggle" onClick={onClosePanel} style={styles.closeBtn}>
+        ✕ Đóng
+      </button>
+
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
         <span
           style={{
@@ -191,4 +199,13 @@ const styles = {
     color: theme.textSecondary,
     cursor: "pointer",
   },
+  closeBtn: {
+    background: "transparent",
+    border: "none",
+    color: theme.textMuted,
+    fontSize: 12.5, 
+    cursor: "pointer",
+    marginBottom: 10, 
+    padding: 0,
+  }
 };
