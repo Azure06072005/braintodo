@@ -19,6 +19,7 @@ export default function App() {
   const [topology, setTopology] = useState(null);
   const [topologyLoading, setTopologyLoading] = useState(false);
   const [clusterOverlayEnabled, setClusterOverlayEnabled] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(false); // chỉ có ý nghĩa ở màn hình hẹp
 
   const {
     nodes,
@@ -56,9 +57,6 @@ export default function App() {
     if (selectedNodeId === node.id) setSelectedNodeId(null);
   }
 
-  // Chỉ tính topology khi bật overlay (betweenness centrality tốn CPU ở
-  // backend) — và tự tính lại mỗi khi graph đổi trong lúc overlay đang bật,
-  // để không hiển thị số liệu cũ khi vừa thêm/xoá node.
   useEffect(() => {
     if (!topologyEnabled) {
       setTopology(null);
@@ -98,6 +96,12 @@ export default function App() {
 
   function handleSelectMatch(nodeId) {
     setSelectedNodeId(nodeId);
+    setPanelOpen(true); // trên mobile, chọn kết quả tìm kiếm cũng nên mở drawer chi tiết
+  }
+
+  function handleNodeClickOnCanvas(nodeId) {
+    setSelectedNodeId(nodeId);
+    setPanelOpen(true);
   }
 
   return (
@@ -115,6 +119,7 @@ export default function App() {
         topologyLoading={topologyLoading}
         clusterOverlayEnabled={clusterOverlayEnabled}
         onToggleClusterOverlay={() => setClusterOverlayEnabled((v) => !v)}
+        onTogglePanel={() => setPanelOpen((v) => !v)}
       />
 
       <div style={{ padding: "10px 16px", borderBottom: `1px solid ${theme.panelBorder}` }}>
@@ -132,7 +137,7 @@ export default function App() {
           <GraphCanvas
             nodes={nodes}
             edges={edges}
-            onNodeClick={setSelectedNodeId}
+            onNodeClick={handleNodeClickOnCanvas}
             selectedNodeId={selectedNodeId}
             highlightNodeIds={highlightNodeIds}
             matchNodeIds={matchNodeIds}
@@ -149,6 +154,8 @@ export default function App() {
           onEdit={(node) => setModal({ type: "edit-node", node })}
           onDelete={handleDeleteNode}
           topology={topology}
+          panelOpen={panelOpen}
+          onClosePanel={() => setPanelOpen(false)}
         />
       </div>
 
@@ -193,8 +200,6 @@ export default function App() {
           />
         </Modal>
       )}
-
-      <style>{`body { margin: 0; background: ${theme.canvasBg}; }`}</style>
     </div>
   );
 }
