@@ -8,9 +8,12 @@ export const theme = {
   textSecondary: "#9c9a92",
   textMuted: "#6b6a64",
   accent: "#7f77dd",
-  importantRing: "#e59a2f", // viền cho node quan trọng nhất theo PageRank (FE010)
+  importantRing: "#e59a2f", 
 
   depthColors: ["#7f77dd", "#1d9e75", "#d85a30", "#e59a2f"],
+
+  clusterPalette: ["#7f77dd", "#1d9e75", "#d85a30", "#e59a2f", "#4a9fd8", "#c25b9e"],
+
 };
 
 export function colorForDepth(depth) {
