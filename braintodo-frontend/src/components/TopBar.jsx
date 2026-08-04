@@ -18,6 +18,8 @@ export default function TopBar({
   topologyEnabled,
   onToggleTopology,
   topologyLoading,
+  clusterOverlayEnabled,
+  onToggleClusterOverlay,
 }) {
   const statusInfo = STATUS_LABEL[realtimeStatus];
 
@@ -36,6 +38,14 @@ export default function TopBar({
         style={topologyEnabled ? { ...styles.newBtn, ...styles.newBtnActive } : styles.newBtn}
       >
         {topologyLoading ? "Đang tính…" : "Độ quan trọng"}
+      </button>
+      <button
+        onClick={onToggleClusterOverlay}
+        style={
+          clusterOverlayEnabled ? { ...styles.newBtn, ...styles.newBtnActive } : styles.newBtn
+        }
+      >
+        Cụm ý tưởng
       </button>
 
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginLeft: "auto" }}>
