@@ -6,6 +6,7 @@ import {
   mockClusters,
   mockLinkSuggestions,
 } from "../data/mockData";
+import { mockSearch } from "../search/mockSearch";
 
 const DEFAULT_API_BASE_URL = "http://localhost:8000";
 
@@ -219,5 +220,13 @@ export function useGraphData(source, apiBaseUrl = DEFAULT_API_BASE_URL) {
       await client.deleteEdge(edgeId);
       setEdges((prev) => removeById(prev, edgeId));
     },
+
+    // Trả về đúng shape SearchResult thật: { matches, subgraph_nodes, subgraph_edges }
+    async search(q, options) {
+      if (source == "mock") {
+        return mockSearch(nodes, edges, q, options);
+      }
+      return client.search(q, options);
+    }
   };
 }
