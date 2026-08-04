@@ -9,7 +9,7 @@ import {
 import { mockSearch } from "../search/mockSearch";
 import { computeMockTopology } from "../analytics/mockTopology";
 
-const DEFAULT_API_BASE_URL = "http://localhost:8000";
+const DEFAULT_API_BASE_URL = import.meta.env.VITE_API_BASE_URL  || "http://localhost:8000";
 
 /** Chèn/cập nhật 1 item theo id vào mảng, không có thì thêm mới. */
 function upsertById(list, item) {
