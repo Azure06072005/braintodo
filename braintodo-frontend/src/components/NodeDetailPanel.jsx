@@ -199,4 +199,13 @@ const styles = {
     color: theme.textSecondary,
     cursor: "pointer",
   },
+  closeBtn: {
+    background: "transparent",
+    border: "none",
+    color: theme.textMuted,
+    fontSize: 12.5, 
+    cursor: "pointer",
+    marginBottom: 10, 
+    padding: 0,
+  }
 };
