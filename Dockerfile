@@ -1,38 +1,24 @@
-# ---- Builder stage ----
-FROM python:3.12-slim AS builder
-
+# --- Stage 1: build ---
+FROM node:20-alpine AS build
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
+COPY package.json package-lock.json ./
+RUN npm ci
 
-COPY requirements.txt .
+COPY . .
 
-# CPU-only torch wheels — nhẹ hơn nhiều so với bản CUDA, đủ dùng vì service
-# chỉ chạy inference nhỏ (GCN 32-d, MiniLM 384-d). Để chuyển sang GPU sau
-# này: đổi base image sang một bản có CUDA và bỏ dòng --index-url dưới đây.
-RUN pip install --no-cache-dir --user \
-    --index-url https://download.pytorch.org/whl/cpu \
-    torch \
-    && pip install --no-cache-dir --user -r requirements.txt
+# URL của backend API, cố định lúc build (Vite chỉ đọc biến VITE_* tại build
+# time, không đọc được ở runtime). Đổi bằng --build-arg khi build image nếu
+# backend không chạy ở localhost:8000.
+ARG VITE_API_BASE_URL=http://localhost:8000
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 
-# ---- Runtime stage ----
-FROM python:3.12-slim
+RUN npm run build
 
-WORKDIR /app
+# --- Stage 2: serve ---
+FROM nginx:1.27-alpine
+COPY --from=build /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-RUN useradd --create-home --shell /bin/bash appuser
-COPY --from=builder /root/.local /home/appuser/.local
-COPY src ./src
-COPY pyproject.toml .
-
-ENV PATH=/home/appuser/.local/bin:$PATH \
-    PYTHONPATH=/app/src \
-    PYTHONUNBUFFERED=1
-
-USER appuser
-
-EXPOSE 8000
-
-CMD ["uvicorn", "braintodo.main:app", "--host", "0.0.0.0", "--port", "8000"]
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
