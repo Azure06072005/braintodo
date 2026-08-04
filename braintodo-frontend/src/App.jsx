@@ -18,6 +18,7 @@ export default function App() {
   const [topologyEnabled, setTopologyEnabled] = useState(false);
   const [topology, setTopology] = useState(null);
   const [topologyLoading, setTopologyLoading] = useState(false);
+  const [clusterOverlayEnabled, setClusterOverlayEnabled] = useState(false);
 
   const {
     nodes,
@@ -112,6 +113,8 @@ export default function App() {
         topologyEnabled={topologyEnabled}
         onToggleTopology={() => setTopologyEnabled((v) => !v)}
         topologyLoading={topologyLoading}
+        clusterOverlayEnabled={clusterOverlayEnabled}
+        onToggleClusterOverlay={() => setClusterOverlayEnabled((v) => !v)}
       />
 
       <div style={{ padding: "10px 16px", borderBottom: `1px solid ${theme.panelBorder}` }}>
@@ -134,6 +137,7 @@ export default function App() {
             highlightNodeIds={highlightNodeIds}
             matchNodeIds={matchNodeIds}
             topology={topology}
+            clusters={clusterOverlayEnabled ? clusters : null}
           />
         </div>
 
