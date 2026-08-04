@@ -2,7 +2,14 @@ import { useEffect, useRef } from "react";
 import * as d3 from "d3";
 import { theme } from "../theme";
 
-export default function GraphCanvas({ nodes, edges, onNodeClick, selectedNodeId }) {
+export default function GraphCanvas({ 
+  nodes, 
+  edges, 
+  onNodeClick, 
+  selectedNodeId,
+  highlightNodeIds,
+  matchNodeIds, 
+}) {
   const svgRef = useRef(null);
   const simRef = useRef(null);
 
@@ -100,6 +107,33 @@ export default function GraphCanvas({ nodes, edges, onNodeClick, selectedNodeId 
       .style("font-size", "11px")
       .style("font-family", "sans-serif")
       .style("pointer-events", "none");
+
+    nodeSel
+      // ...
+      .attr("stroke", (d) =>
+        matchNodeIds?.has(d.id)
+          ? "#e5b93f"
+          : d.id === selectedNodeId
+          ? "#ffffff"
+          : theme.canvasBg
+      )
+      .attr("stroke-width", (d) =>
+        matchNodeIds?.has(d.id) ? 3 : d.id === selectedNodeId ? 2.5 : 2
+      )
+      .attr("opacity", (d) => (highlightNodeIds && !highlightNodeIds.has(d.id) ? 0.25 : 1))
+      .on("click", (event, d) => onNodeClick(d.id));
+
+    nodeSel
+      .append("text")
+      // ...
+      .attr("opacity", (d) => (highlightNodeIds && !highlightNodeIds.has(d.id) ? 0.25 : 1))
+      // ...
+
+    linkSel.attr("opacity", (d) =>
+      highlightNodeIds && !(highlightNodeIds.has(d.source_id) && highlightNodeIds.has(d.target_id))
+        ? 0.15
+        : 1
+    );  
 
     const simulation = d3
       .forceSimulation(nodeData)
