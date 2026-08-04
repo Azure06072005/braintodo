@@ -15,6 +15,9 @@ export default function TopBar({
   realtimeStatus,
   onNewNode,
   onNewEdge,
+  topologyEnabled,
+  onToggleTopology,
+  topologyLoading,
 }) {
   const statusInfo = STATUS_LABEL[realtimeStatus];
 
@@ -27,6 +30,12 @@ export default function TopBar({
       </button>
       <button onClick={onNewEdge} style={styles.newBtn}>
         + Liên kết
+      </button>
+      <button
+        onClick={onToggleTopology}
+        style={topologyEnabled ? { ...styles.newBtn, ...styles.newBtnActive } : styles.newBtn}
+      >
+        {topologyLoading ? "Đang tính…" : "Độ quan trọng"}
       </button>
 
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginLeft: "auto" }}>
@@ -102,5 +111,12 @@ const styles = {
     fontSize: 12.5,
     color: theme.textSecondary,
     cursor: "pointer",
+  },
+  newBtnActive: {
+    marginLeft: 16,
+    background: theme.importantRing,
+    borderColor: theme.importantRing,
+    color: "#0b0e14",
+    fontWeight: 500,
   },
 };
