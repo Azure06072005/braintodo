@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .api import analytics, clusters, edges, gnn, links, nodes, realtime, search
 from .graph.migrations import run_migrations
+from braintodo.db.base import close_engine
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +21,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         logger.warning("Could not run Neo4j migrations at startup", exc_info=True)
     yield
     await nodes.close_default_store()
+    await close_engine()
 
 tags_metadata = [
     {
