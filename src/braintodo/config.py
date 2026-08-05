@@ -1,3 +1,6 @@
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
@@ -6,7 +9,6 @@ class Settings(BaseSettings):
     neo4j_password: str = "changeme"
     database_url: str = "postgresql+asyncpg://braintodo:changeme@localhost:5432/braintodo"
 
-    # MỚI:
     jwt_secret_key: str = "change-this-to-a-random-secret"
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 60
@@ -18,3 +20,5 @@ class Settings(BaseSettings):
     smtp_from: str = "braintodo <no-reply@braintodo.local>"
 
     frontend_base_url: str = "http://localhost:5173"
+
+settings = Settings()

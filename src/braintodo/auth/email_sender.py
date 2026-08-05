@@ -1,5 +1,6 @@
 from typing import Protocol
 
+
 class EmailSender(Protocol): 
     async def send(self, to: str, subject: str, body: str) -> None: ... 
 
@@ -21,8 +22,9 @@ class SMTPEmailSender:
         self._from_addr = from_addr
 
     async def send(self, to: str, subject: str, body: str) -> None: 
-        import aiosmtplib
         from email.message import EmailMessage
+
+        import aiosmtplib
 
         message = EmailMessage()
         message["From"] = self._from_addr

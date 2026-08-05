@@ -51,7 +51,14 @@ class TokenRepository:
             select(EmailVerificationToken).where(EmailVerificationToken.token == token)
         )
         record = result.scalar_one_or_none()
-        if record is None or record.expires_at < datetime.now(UTC): 
+        if record is None:
+            return None
+            
+        expires_at = record.expires_at
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=UTC)
+            
+        if expires_at < datetime.now(UTC): 
             return None
         return record
 
