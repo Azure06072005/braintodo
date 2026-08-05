@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+
 class NodeTopology(BaseModel): 
     """Graph-topology metrics for a single node."""
 

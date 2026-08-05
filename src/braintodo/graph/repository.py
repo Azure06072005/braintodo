@@ -13,7 +13,7 @@ CreateT = TypeVar("CreateT", bound=BaseModel)
 UpdateT = TypeVar("UpdateT", bound=BaseModel)
 
 
-class Page(BaseModel, Generic[T]):
+class Page(BaseModel, Generic[T]):  # noqa: UP046
     """A single page of results, plus enough info for the caller to page further."""
 
     items: list[T]
@@ -22,7 +22,7 @@ class Page(BaseModel, Generic[T]):
     limit: int
 
 
-class BaseRepository(Generic[T, CreateT, UpdateT]):
+class BaseRepository(Generic[T, CreateT, UpdateT]):  # noqa: UP046
     """Generic async repository providing CRUD + pagination for one resource
     type, delegating actual storage to a GraphStore backend (Neo4j or the
     in-memory test double)."""

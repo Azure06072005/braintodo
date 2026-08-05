@@ -5,7 +5,9 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .api import analytics, clusters, edges, gnn, links, nodes, realtime, search
+from braintodo.db.base import close_engine
+
+from .api import analytics, auth, clusters, edges, gnn, links, nodes, realtime, search
 from .graph.migrations import run_migrations
 
 logger = logging.getLogger(__name__)
@@ -20,8 +22,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         logger.warning("Could not run Neo4j migrations at startup", exc_info=True)
     yield
     await nodes.close_default_store()
+    await close_engine()
 
 tags_metadata = [
+    {
+        "name": "auth",
+        "description": "Đăng ký, đăng nhập (JWT), xác thực email.",
+    },
     {
         "name": "nodes",
         "description": "CRUD cho idea node — tiêu đề, nội dung, tag, thuộc tính thị giác (color/shape/size).",
@@ -86,3 +93,4 @@ app.include_router(clusters.router)
 app.include_router(analytics.router)
 app.include_router(realtime.router)
 app.include_router(search.router)
+app.include_router(auth.router)
