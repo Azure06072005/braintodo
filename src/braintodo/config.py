@@ -10,5 +10,6 @@ class Settings(BaseSettings):
     neo4j_user: str = "neo4j"
     neo4j_password: str = "changeme"
 
+    database_url: str = "postgresql+asyncpg://braintodo:changeme@localhost:5432/braintodo"
 
 settings = Settings()
