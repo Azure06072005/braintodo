@@ -1,9 +1,11 @@
 import uuid
+from datetime import UTC
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from braintodo.db.models import EmailVerificationToken, User
+
 
 class UserRepository: 
     def __init__(self, session: AsyncSession) -> None: 
@@ -43,13 +45,13 @@ class TokenRepository:
         return token
 
     async def get_valid(self, token: str) -> EmailVerificationToken | None: 
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         result = await self._session.execute(
             select(EmailVerificationToken).where(EmailVerificationToken.token == token)
         )
         record = result.scalar_one_or_none()
-        if record is None or record.expires_at < datetime.now(timezone.utc): 
+        if record is None or record.expires_at < datetime.now(UTC): 
             return None
         return record
 

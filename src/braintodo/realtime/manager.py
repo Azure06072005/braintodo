@@ -3,6 +3,7 @@ from typing import Any
 
 from fastapi import WebSocket
 
+
 class ConnectionManager: 
     """Tracks connected WebSocket clients and broadcasts events to all of
     them. Single-process, in-memory - fine for this app since there's only
@@ -25,8 +26,8 @@ class ConnectionManager:
         for connection in self._connections: 
             try: 
                 await connection.send_json(message)
-            except Exception: 
-            # noqa: BLE001 - any failure means a dead socket
+            except Exception: # noqa: BLE001
+
             # Client disconnected without a clean close handshake -
             # drop it rather than letting one dead socket break the
             # broadcast for everyone else.

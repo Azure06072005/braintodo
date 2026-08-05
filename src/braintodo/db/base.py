@@ -5,8 +5,9 @@ from sqlalchemy.orm import DeclarativeBase
 
 from braintodo.config import settings
 
-class Base(DeclarativeBase): 
 
+class Base(DeclarativeBase): 
+    pass
 # echo = False
 _engine = create_async_engine(settings.database_url, echo=False)
 _session_factory = async_sessionmaker(_engine, expire_on_commit=False)

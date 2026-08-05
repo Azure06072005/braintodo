@@ -1,4 +1,4 @@
-import networkx as nx 
+import networkx as nx
 from networkx.algorithms.community import louvain_communities
 
 from braintodo.graph.base import GraphStore

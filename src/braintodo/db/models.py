@@ -1,14 +1,14 @@
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import DateTime, ForeignKey, String, Boolean
-from sqlalchemy import Uuid
+from sqlalchemy import Boolean, DateTime, ForeignKey, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from braintodo.db.base import Base
 
+
 def _utcnow() -> datetime: 
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 class User(Base): 
     __tablename__ = "users"

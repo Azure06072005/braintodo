@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends 
+from fastapi import APIRouter, Depends
 
 from braintodo.api.nodes import get_embedder, get_store
 from braintodo.embedding.base import EmbeddingProvider

@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from braintodo.models.edge import Edge
 from braintodo.models.node import Node
 
+
 class SearchMatch(BaseModel): 
     """A node that matched the query, with its relevance score"""
 

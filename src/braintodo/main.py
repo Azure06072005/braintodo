@@ -5,9 +5,10 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from braintodo.db.base import close_engine
+
 from .api import analytics, clusters, edges, gnn, links, nodes, realtime, search
 from .graph.migrations import run_migrations
-from braintodo.db.base import close_engine
 
 logger = logging.getLogger(__name__)
 
