@@ -33,6 +33,16 @@ services:
       - neo4j
       - postgres
 
+  frontend:
+    build:
+      context: ./braintodo-frontend
+      args:
+        VITE_API_BASE_URL: http://localhost:8000
+    ports:
+      - "5173:80"
+    depends_on:
+      - app
+
 volumes:
   neo4j_data:
   postgres_data:

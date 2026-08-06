@@ -1,12 +1,11 @@
-import asyncio 
+import asyncio
 from logging.config import fileConfig
 
-from alembic import context
 from sqlalchemy.ext.asyncio import create_async_engine
 
+from alembic import context
 from braintodo.config import settings
 from braintodo.db.base import Base
-from braintodo.db import models 
 
 config = context.config
 if config.config_file_name is not None: 
