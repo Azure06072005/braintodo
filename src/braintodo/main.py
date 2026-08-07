@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from braintodo.db.base import close_engine
 
-from .api import analytics, auth, clusters, edges, gnn, links, nodes, realtime, search
+from .api import analytics, auth, clusters, edges, gnn, graph, links, nodes, realtime, search
 from .graph.migrations import run_migrations
 
 logger = logging.getLogger(__name__)
@@ -61,6 +61,10 @@ tags_metadata = [
         "name": "search",
         "description": "Tìm kiếm kết hợp keyword + semantic similarity + mở rộng subgraph BFS.",
     },
+    {
+        "name": "graph",
+        "description": "Export/import toàn bộ đồ thị dạng JSON.",
+    },
 ]
 
 app = FastAPI(
@@ -93,4 +97,5 @@ app.include_router(clusters.router)
 app.include_router(analytics.router)
 app.include_router(realtime.router)
 app.include_router(search.router)
+app.include_router(graph.router)
 app.include_router(auth.router)

@@ -6,6 +6,7 @@ import Modal from "../components/Modal";
 import NodeForm from "../components/NodeForm";
 import EdgeForm from "../components/EdgeForm";
 import SearchBar from "../components/SearchBar";
+import ImportExportControls from "../components/ImportExportControls";
 import { useGraphData } from "../hooks/useGraphData";
 import { theme } from "../theme";
 
@@ -35,6 +36,8 @@ export default function AppPage() {
     createEdge,
     search,
     getTopology,
+    exportGraph,
+    importGraph,
   } = useGraphData(source);
 
   const nodesById = useMemo(() => new Map(nodes.map((n) => [n.id, n])), [nodes]);
@@ -120,6 +123,7 @@ export default function AppPage() {
         clusterOverlayEnabled={clusterOverlayEnabled}
         onToggleClusterOverlay={() => setClusterOverlayEnabled((v) => !v)}
         onTogglePanel={() => setPanelOpen((v) => !v)}
+        extraActions={<ImportExportControls onExport={exportGraph} onImport={importGraph} />}
       />
 
       <div style={{ padding: "10px 16px", borderBottom: `1px solid ${theme.panelBorder}` }}>

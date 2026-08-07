@@ -21,6 +21,7 @@ export default function TopBar({
   clusterOverlayEnabled,
   onToggleClusterOverlay,
   onTogglePanel,
+  extraActions,
 }) {
   const statusInfo = STATUS_LABEL[realtimeStatus];
 
@@ -68,6 +69,8 @@ export default function TopBar({
             Không nối được API thật ({error}) — đang dùng dữ liệu mẫu
           </span>
         )}
+
+        {extraActions}
 
         <div style={styles.toggleGroup}>
           <button

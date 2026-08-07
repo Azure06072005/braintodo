@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { createApiClient } from "../api/client";
 import {
   mockNodes,
@@ -42,6 +42,20 @@ export function useGraphData(source, apiBaseUrl = DEFAULT_API_BASE_URL) {
 
   const client = useMemo(() => createApiClient(apiBaseUrl), [apiBaseUrl]);
 
+  async function refetchAllImpl() {
+    const [liveNodes, liveEdges, liveClusters, liveSuggestions] = await Promise.all([
+      client.listNodes(),
+      client.listEdges(),
+      client.getClusters(),
+      client.getLinkSuggestions(20),
+    ]);
+    setNodes(liveNodes);
+    setEdges(liveEdges);
+    setClusters(liveClusters);
+    setLinkSuggestions(liveSuggestions);
+  }
+  const refetchAll = useCallback(refetchAllImpl, [client]);
+
   // Tải dữ liệu ban đầu (mock hoặc snapshot từ API thật).
   useEffect(() => {
     if (source === "mock") {
@@ -57,19 +71,7 @@ export function useGraphData(source, apiBaseUrl = DEFAULT_API_BASE_URL) {
     setLoading(true);
     setError(null);
 
-    Promise.all([
-      client.listNodes(),
-      client.listEdges(),
-      client.getClusters(),
-      client.getLinkSuggestions(20),
-    ])
-      .then(([liveNodes, liveEdges, liveClusters, liveSuggestions]) => {
-        if (cancelled) return;
-        setNodes(liveNodes);
-        setEdges(liveEdges);
-        setClusters(liveClusters);
-        setLinkSuggestions(liveSuggestions);
-      })
+    refetchAll()
       .catch((err) => {
         if (cancelled) return;
         setError(err.message);
@@ -86,7 +88,7 @@ export function useGraphData(source, apiBaseUrl = DEFAULT_API_BASE_URL) {
     return () => {
       cancelled = true;
     };
-  }, [source, client]);
+  }, [source, client, refetchAll]);
 
   // Nối WebSocket khi ở chế độ "live" — patch state tăng dần theo event,
   // không refetch toàn bộ graph mỗi lần có thay đổi.
@@ -114,6 +116,13 @@ export function useGraphData(source, apiBaseUrl = DEFAULT_API_BASE_URL) {
           case "edge_deleted":
             setEdges((prev) => removeById(prev, data.id));
             break;
+          case "graph_imported":
+            // Event chỉ mang {nodes_created, edges_created, edges_skipped} —
+            // không đủ để patch tăng dần, nên refetch toàn bộ.
+            refetchAll().catch(() => {
+              /* refetch lỗi thì giữ nguyên state cũ, không crash UI */
+            });
+            break;
           default:
             // Event lạ chưa biết — bỏ qua thay vì crash.
             break;
@@ -126,7 +135,7 @@ export function useGraphData(source, apiBaseUrl = DEFAULT_API_BASE_URL) {
       disconnect();
       setRealtimeStatus("disconnected");
     };
-  }, [source, client]);
+  }, [source, client, refetchAll]);
 
   return {
     nodes,
@@ -235,6 +244,50 @@ export function useGraphData(source, apiBaseUrl = DEFAULT_API_BASE_URL) {
         return computeMockTopology(nodes, edges);
       }
       return client.getTopology();
-    }
+    },
+
+    async exportGraph() {
+      if (source === "mock") {
+        return { nodes, edges };
+      }
+      return client.exportGraph();
+    },
+
+    async importGraph(data) {
+      if (source === "mock") {
+        // Cùng logic remap id như backend thật (graph/api.py import_graph):
+        // id trong file luôn được thay bằng id mới, edge dangling thì bỏ qua.
+        const idMap = new Map();
+        const newNodes = data.nodes.map((n) => {
+          const newId = crypto.randomUUID();
+          idMap.set(n.id, newId);
+          return { ...n, id: newId, embedding: null, graph_embedding: null };
+        });
+        const newEdges = [];
+        let edgesSkipped = 0;
+        for (const e of data.edges) {
+          const sourceId = idMap.get(e.source_id);
+          const targetId = idMap.get(e.target_id);
+          if (!sourceId || !targetId) {
+            edgesSkipped += 1;
+            continue;
+          }
+          newEdges.push({ ...e, id: crypto.randomUUID(), source_id: sourceId, target_id: targetId });
+        }
+        setNodes((prev) => [...prev, ...newNodes]);
+        setEdges((prev) => [...prev, ...newEdges]);
+        return {
+          nodes_created: newNodes.length,
+          edges_created: newEdges.length,
+          edges_skipped: edgesSkipped,
+        };
+      }
+      const result = await client.importGraph(data);
+      // Server đã tạo xong toàn bộ node/edge với id mới — refetch để lấy
+      // đúng state (không tự patch vì response chỉ có số lượng, không có
+      // node/edge cụ thể).
+      await refetchAll();
+      return result;
+    },
   };
 }
