@@ -4,10 +4,13 @@
  */
 
 export function createApiClient(baseUrl) {
-  async function getJson(path) {
-    const resp = await fetch(`${baseUrl}${path}`);
+  async function getJson(path, { token } = {}) {
+    const resp = await fetch(`${baseUrl}${path}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+    });
     if (!resp.ok) {
-      throw new Error(`${path} -> HTTP ${resp.status}`);
+      const detail = await resp.json().catch(() => null);
+      throw new Error(detail?.detail || `${path} -> HTTP ${resp.status}`);
     }
     return resp.json();
   }
@@ -28,6 +31,23 @@ export function createApiClient(baseUrl) {
   }
 
   return {
+    async register(email, password) {
+      return sendJson("POST", "/auth/register", { email, password });
+      // -> UserOut: {id, email, is_verified: false}
+    },
+    async login(email, password) {
+      return sendJson("POST", "/auth/login", { email, password });
+      // -> TokenResponse: {access_token, token_type: "bearer"}
+    },
+    async verifyEmail(token) {
+      return getJson(`/auth/verify?token=${encodeURIComponent(token)}`);
+      // -> UserOut: {..., is_verified: true}
+    },
+    async me(token) {
+      return getJson("/auth/me", { token });
+      // -> UserOut, 401 nếu thiếu/sai token
+    },
+
     async listNodes({ skip = 0, limit = 200 } = {}) {
       const page = await getJson(`/nodes?skip=${skip}&limit=${limit}`);
       return page.items; // backend trả Page[Node]: {items, total, skip, limit}
