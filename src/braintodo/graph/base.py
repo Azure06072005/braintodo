@@ -5,7 +5,9 @@ from braintodo.models.node import Node, NodeCreate, NodeUpdate
 
 
 class NodeNotFoundError(Exception):
-    """Raised when a node lookup fails."""
+    """Raised when a node lookup fails, including when the node exists but
+    is owned by a different user (F020: ownership is not leaked to the
+    caller as a distinct error, to avoid revealing other users' node ids)."""
 
     def __init__(self, node_id: str) -> None:
         self.node_id = node_id
@@ -13,7 +15,8 @@ class NodeNotFoundError(Exception):
 
 
 class EdgeNotFoundError(Exception):
-    """Raised when an edge lookup fails."""
+    """Raised when an edge lookup fails, including when the edge exists but
+    is owned by a different user (see NodeNotFoundError)."""
 
     def __init__(self, edge_id: str) -> None:
         self.edge_id = edge_id
@@ -22,34 +25,29 @@ class EdgeNotFoundError(Exception):
 
 class GraphStore(Protocol):
     """Backend-agnostic interface for the idea graph. The API layer depends only
-    on this Protocol, never on a concrete backend (Neo4j or in-memory)."""
+    on this Protocol, never on a concrete backend (Neo4j or in-memory).
 
-    # -- Nodes --------------------------------------------------------
-    async def create_node(self, data: NodeCreate) -> Node: ...
+    F020: every method is scoped to a single owner_id, so each user only ever
+    sees, creates, or mutates their own nodes/edges. Passing an owner_id that
+    doesn't own a given node/edge behaves exactly like the node/edge not
+    existing (NodeNotFoundError / EdgeNotFoundError), not a separate
+    "forbidden" case.
+    """
 
-    async def get_node(self, node_id: str) -> Node: ...
-
-    async def update_node(self, node_id: str, data: NodeUpdate) -> Node: ...
-
-    async def delete_node(self, node_id: str) -> None: ...
-
-    async def list_nodes(self) -> list[Node]: ...
-
+    async def create_node(self, data: NodeCreate, owner_id: str) -> Node: ...
+    async def get_node(self, node_id: str, owner_id: str) -> Node: ...
+    async def update_node(self, node_id: str, data: NodeUpdate, owner_id: str) -> Node: ...
+    async def delete_node(self, node_id: str, owner_id: str) -> None: ...
+    async def list_nodes(self, owner_id: str) -> list[Node]: ...
     async def list_nodes_paginated(
-        self, skip: int, limit: int
+        self, skip: int, limit: int, owner_id: str
     ) -> tuple[list[Node], int]: ...
 
-    # -- Edges ----------------------------------------------------------
-    async def create_edge(self, data: EdgeCreate) -> Edge: ...
-
-    async def get_edge(self, edge_id: str) -> Edge: ...
-
-    async def update_edge(self, edge_id: str, data: EdgeUpdate) -> Edge: ...
-
-    async def delete_edge(self, edge_id: str) -> None: ...
-
-    async def list_edges(self) -> list[Edge]: ...
-
+    async def create_edge(self, data: EdgeCreate, owner_id: str) -> Edge: ...
+    async def get_edge(self, edge_id: str, owner_id: str) -> Edge: ...
+    async def update_edge(self, edge_id: str, data: EdgeUpdate, owner_id: str) -> Edge: ...
+    async def delete_edge(self, edge_id: str, owner_id: str) -> None: ...
+    async def list_edges(self, owner_id: str) -> list[Edge]: ...
     async def list_edges_paginated(
-        self, skip: int, limit: int
+        self, skip: int, limit: int, owner_id: str
     ) -> tuple[list[Edge], int]: ...

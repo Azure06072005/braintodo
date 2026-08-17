@@ -8,6 +8,8 @@ from braintodo.graph.repository import NodeRepository
 from braintodo.models.edge import EdgeCreate
 from braintodo.models.node import NodeCreate
 
+OWNER = "owner-1"
+
 
 @pytest.fixture
 def store() -> InMemoryGraphStore:
@@ -22,16 +24,16 @@ def node_repo(store: InMemoryGraphStore) -> NodeRepository:
 async def test_recompute_all_sets_graph_embedding_on_every_node(
     store: InMemoryGraphStore, node_repo: NodeRepository
 ) -> None:
-    a = await node_repo.create(NodeCreate(title="A"))
-    b = await node_repo.create(NodeCreate(title="B"))
-    await store.create_edge(EdgeCreate(source_id=a.id, target_id=b.id))
+    a = await node_repo.create(NodeCreate(title="A"), OWNER)
+    b = await node_repo.create(NodeCreate(title="B"), OWNER)
+    await store.create_edge(EdgeCreate(source_id=a.id, target_id=b.id), OWNER)
 
     service = GraphEmbeddingService(store, FakeGraphEmbedder(output_dimension=8))
-    updated_count = await service.recompute_all()
+    updated_count = await service.recompute_all(OWNER)
 
     assert updated_count == 2
-    a_after = await store.get_node(a.id)
-    b_after = await store.get_node(b.id)
+    a_after = await store.get_node(a.id, OWNER)
+    b_after = await store.get_node(b.id, OWNER)
     assert a_after.graph_embedding is not None
     assert len(a_after.graph_embedding) == 8
     assert b_after.graph_embedding is not None
@@ -43,16 +45,16 @@ async def test_recompute_all_skips_nodes_without_text_embedding(
 ) -> None:
     from braintodo.models.node import NodeCreate as RawNodeCreate
 
-    raw_node = await store.create_node(RawNodeCreate(title="No embedding"))
+    raw_node = await store.create_node(RawNodeCreate(title="No embedding"), OWNER)
 
     service = GraphEmbeddingService(store, FakeGraphEmbedder())
-    updated_count = await service.recompute_all()
+    updated_count = await service.recompute_all(OWNER)
 
     assert updated_count == 0
-    after = await store.get_node(raw_node.id)
+    after = await store.get_node(raw_node.id, OWNER)
     assert after.graph_embedding is None
 
 
 async def test_recompute_all_on_empty_graph(store: InMemoryGraphStore) -> None:
     service = GraphEmbeddingService(store, FakeGraphEmbedder())
-    assert await service.recompute_all() == 0
+    assert await service.recompute_all(OWNER) == 0

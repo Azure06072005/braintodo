@@ -2,6 +2,8 @@ from functools import lru_cache
 
 from fastapi import APIRouter, Depends, HTTPException
 
+from braintodo.api.auth import get_current_user
+from braintodo.db.models import User
 from braintodo.embedding.base import EmbeddingProvider
 from braintodo.embedding.sentence_transformer_provider import (
     get_sentence_transformer_provider,
@@ -21,14 +23,10 @@ def _default_store() -> Neo4jGraphStore:
 
 
 def get_store() -> GraphStore:
-    """Real production backend. Tests override this with InMemoryGraphStore
-    via app.dependency_overrides[get_store]."""
     return _default_store()
 
 
 def get_embedder() -> EmbeddingProvider:
-    """Real production embedding provider. Tests override this with
-    FakeEmbeddingProvider via app.dependency_overrides[get_embedder]."""
     return get_sentence_transformer_provider()
 
 
@@ -40,7 +38,6 @@ def get_node_repository(
 
 
 async def close_default_store() -> None:
-    """Closes the singleton Neo4j driver, if one was ever created."""
     if _default_store.cache_info().currsize:
         await _default_store().close()
     _default_store.cache_clear()
@@ -51,8 +48,9 @@ async def create_node(
     data: NodeCreate,
     repo: NodeRepository = Depends(get_node_repository),
     manager: ConnectionManager = Depends(get_manager),
+    current_user: User = Depends(get_current_user),
 ) -> Node:
-    node =  await repo.create(data)
+    node = await repo.create(data, str(current_user.id))
     await manager.broadcast("node_created", node.model_dump())
     return node
 
@@ -62,30 +60,34 @@ async def list_nodes(
     skip: int = 0,
     limit: int = 20,
     repo: NodeRepository = Depends(get_node_repository),
+    current_user: User = Depends(get_current_user),
 ) -> Page[Node]:
-    return await repo.list_paginated(skip, limit)
+    return await repo.list_paginated(str(current_user.id), skip, limit)
 
 
 @router.get("/{node_id}", response_model=Node)
 async def get_node(
-    node_id: str, repo: NodeRepository = Depends(get_node_repository)
+    node_id: str,
+    repo: NodeRepository = Depends(get_node_repository),
+    current_user: User = Depends(get_current_user),
 ) -> Node:
     try:
-        return await repo.get(node_id)
+        return await repo.get(node_id, str(current_user.id))
     except NodeNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
 @router.patch("/{node_id}", response_model=Node)
 async def update_node(
-    node_id: str, 
-    data: NodeUpdate, 
+    node_id: str,
+    data: NodeUpdate,
     repo: NodeRepository = Depends(get_node_repository),
     manager: ConnectionManager = Depends(get_manager),
+    current_user: User = Depends(get_current_user),
 ) -> Node:
     try:
-        node = await repo.update(node_id, data)
-    except NodeNotFoundError as exc: 
+        node = await repo.update(node_id, data, str(current_user.id))
+    except NodeNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     await manager.broadcast("node_updated", node.model_dump())
     return node
@@ -93,12 +95,13 @@ async def update_node(
 
 @router.delete("/{node_id}", status_code=204)
 async def delete_node(
-    node_id: str, 
+    node_id: str,
     repo: NodeRepository = Depends(get_node_repository),
     manager: ConnectionManager = Depends(get_manager),
+    current_user: User = Depends(get_current_user),
 ) -> None:
     try:
-        await repo.delete(node_id)
+        await repo.delete(node_id, str(current_user.id))
     except NodeNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     await manager.broadcast("node_deleted", {"id": node_id})

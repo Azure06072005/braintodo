@@ -6,14 +6,13 @@ from braintodo.models.node import NodeUpdate
 
 
 class GraphEmbeddingService:
-
     def __init__(self, store: GraphStore, embedder: GraphEmbedder) -> None:
         self._store = store
         self._embedder = embedder
 
-    async def recompute_all(self) -> int:
-        nodes = await self._store.list_nodes()
-        edges = await self._store.list_edges()
+    async def recompute_all(self, owner_id: str) -> int:
+        nodes = await self._store.list_nodes(owner_id)
+        edges = await self._store.list_edges(owner_id)
 
         # Nodes without a text embedding (F004) can't be fed into the GNN as
         # a feature vector - skip them rather than guessing with a zero
@@ -28,6 +27,8 @@ class GraphEmbeddingService:
         )
 
         for node_id, vector in embeddings.items():
-            await self._store.update_node(node_id, NodeUpdate(graph_embedding=vector))
+            await self._store.update_node(
+                node_id, NodeUpdate(graph_embedding=vector), owner_id
+            )
 
         return len(embeddings)

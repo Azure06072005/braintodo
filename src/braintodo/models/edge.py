@@ -17,6 +17,7 @@ class EdgeUpdate(BaseModel):
 
 class Edge(BaseModel):
     id: str
+    owner_id: str
     source_id: str
     target_id: str
     relation_type: str = "related_to"

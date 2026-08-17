@@ -4,12 +4,14 @@ from braintodo.models.edge import EdgeCreate
 from braintodo.models.node import NodeCreate, NodeUpdate
 from braintodo.search.service import SearchService
 
+OWNER = "owner-1"
+
 
 async def _make_node(
     store: InMemoryGraphStore, title: str, embedding: list[float], **kwargs
 ):
-    node = await store.create_node(NodeCreate(title=title, **kwargs))
-    return await store.update_node(node.id, NodeUpdate(embedding=embedding))
+    node = await store.create_node(NodeCreate(title=title, **kwargs), OWNER)
+    return await store.update_node(node.id, NodeUpdate(embedding=embedding), OWNER)
 
 
 async def test_keyword_match_is_found_even_without_semantic_similarity() -> None:
@@ -19,7 +21,7 @@ async def test_keyword_match_is_found_even_without_semantic_similarity() -> None
     await _make_node(store, "Gardening tips", [0.0, 0.0])
 
     service = SearchService(store, embedder)
-    result = await service.search("neural", limit=10)
+    result = await service.search(OWNER, "neural", limit=10)
 
     assert len(result.matches) == 1
     assert result.matches[0].node_id == match.id
@@ -33,7 +35,7 @@ async def test_semantic_match_ranks_above_unrelated_node() -> None:
     await _make_node(store, "Unrelated title", [0.0] * embedder.dimension)
 
     service = SearchService(store, embedder)
-    result = await service.search("machine learning", limit=10)
+    result = await service.search(OWNER, "machine learning", limit=10)
 
     assert result.matches[0].node_id == related.id
 
@@ -44,7 +46,7 @@ async def test_no_matches_returns_empty_result() -> None:
     await _make_node(store, "Unrelated title", [0.0] * embedder.dimension)
 
     service = SearchService(store, embedder)
-    result = await service.search("completely different query", limit=10)
+    result = await service.search(OWNER, "completely different query", limit=10)
 
     assert result.matches == []
     assert result.subgraph_nodes == []
@@ -57,11 +59,11 @@ async def test_subgraph_expands_one_hop_from_matched_node() -> None:
     match = await _make_node(store, "Neural networks", [0.0, 0.0])
     neighbor = await _make_node(store, "Backpropagation", [0.0, 0.0])
     far = await _make_node(store, "Unrelated", [0.0, 0.0])
-    await store.create_edge(EdgeCreate(source_id=match.id, target_id=neighbor.id))
-    await store.create_edge(EdgeCreate(source_id=neighbor.id, target_id=far.id))
+    await store.create_edge(EdgeCreate(source_id=match.id, target_id=neighbor.id), OWNER)
+    await store.create_edge(EdgeCreate(source_id=neighbor.id, target_id=far.id), OWNER)
 
     service = SearchService(store, embedder)
-    result = await service.search("neural", limit=10, depth=1)
+    result = await service.search(OWNER, "neural", limit=10, depth=1)
 
     subgraph_ids = {n.id for n in result.subgraph_nodes}
     assert subgraph_ids == {match.id, neighbor.id}
@@ -73,10 +75,10 @@ async def test_depth_zero_returns_only_matched_nodes() -> None:
     embedder = FakeEmbeddingProvider()
     match = await _make_node(store, "Neural networks", [0.0, 0.0])
     neighbor = await _make_node(store, "Backpropagation", [0.0, 0.0])
-    await store.create_edge(EdgeCreate(source_id=match.id, target_id=neighbor.id))
+    await store.create_edge(EdgeCreate(source_id=match.id, target_id=neighbor.id), OWNER)
 
     service = SearchService(store, embedder)
-    result = await service.search("neural", limit=10, depth=0)
+    result = await service.search(OWNER, "neural", limit=10, depth=0)
 
     assert {n.id for n in result.subgraph_nodes} == {match.id}
     assert result.subgraph_edges == []
@@ -89,6 +91,6 @@ async def test_limit_caps_number_of_matches() -> None:
         await _make_node(store, f"apple {i}", [0.0, 0.0])
 
     service = SearchService(store, embedder)
-    result = await service.search("apple", limit=2)
+    result = await service.search(OWNER, "apple", limit=2)
 
     assert len(result.matches) == 2

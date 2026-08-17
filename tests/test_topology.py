@@ -7,9 +7,11 @@ from braintodo.graph.memory_store import InMemoryGraphStore
 from braintodo.models.edge import EdgeCreate
 from braintodo.models.node import NodeCreate
 
+OWNER = "owner-1"
+
 
 async def _make_node(store: InMemoryGraphStore, title: str) -> str:
-    node = await store.create_node(NodeCreate(title=title))
+    node = await store.create_node(NodeCreate(title=title), OWNER)
     return node.id
 
 
@@ -17,7 +19,7 @@ async def test_empty_graph_returns_no_metrics() -> None:
     store = InMemoryGraphStore()
 
     service = TopologyService(store)
-    metrics = await service.compute_metrics()
+    metrics = await service.compute_metrics(OWNER)
 
     assert metrics == []
 
@@ -31,10 +33,10 @@ async def test_hub_node_has_highest_degree_and_betweenness() -> None:
         await _make_node(store, "C"),
     )
     for leaf in (a, b, c):
-        await store.create_edge(EdgeCreate(source_id=hub, target_id=leaf))
+        await store.create_edge(EdgeCreate(source_id=hub, target_id=leaf), OWNER)
 
     service = TopologyService(store)
-    metrics = {m.node_id: m for m in await service.compute_metrics()}
+    metrics = {m.node_id: m for m in await service.compute_metrics(OWNER)}
 
     assert metrics[hub].degree == 3
     assert metrics[hub].betweenness_centrality > metrics[a].betweenness_centrality
@@ -49,7 +51,7 @@ async def test_isolated_node_has_zero_degree_and_betweenness() -> None:
     lonely = await _make_node(store, "Lonely")
 
     service = TopologyService(store)
-    metrics = {m.node_id: m for m in await service.compute_metrics()}
+    metrics = {m.node_id: m for m in await service.compute_metrics(OWNER)}
 
     assert metrics[lonely].degree == 0
     assert metrics[lonely].betweenness_centrality == 0.0
@@ -64,11 +66,11 @@ async def test_pagerank_sums_to_approximately_one() -> None:
         await _make_node(store, "B"),
         await _make_node(store, "C"),
     )
-    await store.create_edge(EdgeCreate(source_id=a, target_id=b))
-    await store.create_edge(EdgeCreate(source_id=b, target_id=c))
+    await store.create_edge(EdgeCreate(source_id=a, target_id=b), OWNER)
+    await store.create_edge(EdgeCreate(source_id=b, target_id=c), OWNER)
 
     service = TopologyService(store)
-    metrics = await service.compute_metrics()
+    metrics = await service.compute_metrics(OWNER)
 
     total = sum(m.pagerank for m in metrics)
     assert total == pytest.approx(1.0, abs=1e-4)

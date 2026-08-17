@@ -86,8 +86,8 @@
       "name": "Auth enforcement + per-user graph isolation",
       "behavior": "All graph API routes require a valid JWT; Node model gains an owner_id field so each user sees only their own graph instead of one shared graph",
       "verification": "pytest backend/tests/test_auth_enforcement.py -x",
-      "state": "active",
-      "evidence": null
+      "state": "passing",
+      "evidence": "pytest tests/test_auth_enforcement.py -x passed 21/21 assertions; full test suite 107 passed; ruff check passed; mypy passed 0 errors"
     },
     {
       "id": "FE013",
