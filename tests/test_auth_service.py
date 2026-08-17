@@ -3,7 +3,10 @@ import pytest
 from braintodo.auth.email_sender import FakeEmailSender
 from braintodo.auth.security import decode_access_token
 from braintodo.auth.service import (
-    AuthService, EmailAlreadyRegisteredError, EmailNotVerifiedError, InvalidCredentialsError,
+    AuthService,
+    EmailAlreadyRegisteredError,
+    EmailNotVerifiedError,
+    InvalidCredentialsError,
 )
 from braintodo.db.repository import TokenRepository, UserRepository
 

@@ -12,9 +12,9 @@ class TopologyService:
     def __init__(self, store: GraphStore) -> None:
         self._store = store
 
-    async def compute_metrics(self) -> list[NodeTopology]:
-        nodes = await self._store.list_nodes()
-        edges = await self._store.list_edges()
+    async def compute_metrics(self, owner_id: str) -> list[NodeTopology]:
+        nodes = await self._store.list_nodes(owner_id)
+        edges = await self._store.list_edges(owner_id)
 
         graph: nx.Graph = nx.Graph()
         graph.add_nodes_from(n.id for n in nodes)

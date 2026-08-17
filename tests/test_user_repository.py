@@ -1,5 +1,4 @@
-import pytest
-from braintodo.db.repository import UserRepository, TokenRepository
+from braintodo.db.repository import TokenRepository, UserRepository
 
 
 async def test_create_and_get_user_by_email(session) -> None:

@@ -3,10 +3,12 @@ from braintodo.linking.service import LinkPredictionService
 from braintodo.models.edge import EdgeCreate
 from braintodo.models.node import NodeCreate, NodeUpdate
 
+OWNER = "owner-1"
+
 
 async def _make_node(store: InMemoryGraphStore, title: str, graph_embedding: list[float]):
-    node = await store.create_node(NodeCreate(title=title))
-    return await store.update_node(node.id, NodeUpdate(graph_embedding=graph_embedding))
+    node = await store.create_node(NodeCreate(title=title), OWNER)
+    return await store.update_node(node.id, NodeUpdate(graph_embedding=graph_embedding), OWNER)
 
 
 async def test_suggests_similar_unconnected_nodes() -> None:
@@ -16,7 +18,7 @@ async def test_suggests_similar_unconnected_nodes() -> None:
     c = await _make_node(store, "C", [0.0, 1.0])  # orthogonal -> similarity 0.0
 
     service = LinkPredictionService(store)
-    suggestions = await service.suggest_links(limit=10)
+    suggestions = await service.suggest_links(OWNER, limit=10)
 
     pairs = {frozenset((s.source_id, s.target_id)): s.score for s in suggestions}
     assert pairs[frozenset((a.id, b.id))] == 1.0
@@ -28,10 +30,10 @@ async def test_existing_edges_are_excluded() -> None:
     store = InMemoryGraphStore()
     a = await _make_node(store, "A", [1.0, 0.0])
     b = await _make_node(store, "B", [1.0, 0.0])
-    await store.create_edge(EdgeCreate(source_id=a.id, target_id=b.id))
+    await store.create_edge(EdgeCreate(source_id=a.id, target_id=b.id), OWNER)
 
     service = LinkPredictionService(store)
-    suggestions = await service.suggest_links(limit=10)
+    suggestions = await service.suggest_links(OWNER, limit=10)
 
     assert suggestions == []
 
@@ -39,10 +41,10 @@ async def test_existing_edges_are_excluded() -> None:
 async def test_nodes_without_graph_embedding_are_skipped() -> None:
     store = InMemoryGraphStore()
     await _make_node(store, "A", [1.0, 0.0])
-    await store.create_node(NodeCreate(title="B"))  # no graph_embedding yet
+    await store.create_node(NodeCreate(title="B"), OWNER)  # no graph_embedding yet
 
     service = LinkPredictionService(store)
-    suggestions = await service.suggest_links(limit=10)
+    suggestions = await service.suggest_links(OWNER, limit=10)
 
     assert suggestions == []
 
@@ -53,6 +55,6 @@ async def test_limit_caps_number_of_results() -> None:
         await _make_node(store, f"N{i}", [1.0, float(i)])
 
     service = LinkPredictionService(store)
-    suggestions = await service.suggest_links(limit=2)
+    suggestions = await service.suggest_links(OWNER, limit=2)
 
     assert len(suggestions) == 2

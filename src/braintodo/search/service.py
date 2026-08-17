@@ -33,10 +33,10 @@ class SearchService:
         self._embedder = embedder
 
     async def search(
-        self, query: str, limit: int = 10, depth: int = 1
+        self, owner_id: str, query: str, limit: int = 10, depth: int = 1
     ) -> SearchResult:
-        nodes = await self._store.list_nodes()
-        edges = await self._store.list_edges()
+        nodes = await self._store.list_nodes(owner_id)
+        edges = await self._store.list_edges(owner_id)
 
         query_embedding = await asyncio.to_thread(self._embedder.embed, query)
         query_lower = query.lower()

@@ -11,6 +11,8 @@ from braintodo.graph.migrations import run_migrations
 from braintodo.graph.neo4j_store import Neo4jGraphStore
 from braintodo.models.node import NodeCreate
 
+OWNER = "owner-1"
+
 
 async def _driver_is_reachable() -> bool:
     driver = AsyncGraphDatabase.driver(
@@ -39,6 +41,6 @@ async def store():
 
 
 async def test_create_and_get_node_against_real_db(store: Neo4jGraphStore) -> None:
-    node = await store.create_node(NodeCreate(title="Real DB idea"))
-    fetched = await store.get_node(node.id)
+    node = await store.create_node(NodeCreate(title="Real DB idea"), OWNER)
+    fetched = await store.get_node(node.id, OWNER)
     assert fetched == node

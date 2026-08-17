@@ -1,7 +1,11 @@
-from braintodo.auth.security import (
-    create_access_token, decode_access_token, hash_password, verify_password,
-)
 import uuid
+
+from braintodo.auth.security import (
+    create_access_token,
+    decode_access_token,
+    hash_password,
+    verify_password,
+)
 
 
 def test_hash_and_verify_password() -> None:

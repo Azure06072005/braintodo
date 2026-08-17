@@ -22,8 +22,10 @@ class NodeUpdate(BaseModel):
     embedding: list[float] | None = None
     graph_embedding: list[float] | None = None
 
+
 class Node(BaseModel):
     id: str
+    owner_id: str
     title: str
     content: str = ""
     tags: list[str] = Field(default_factory=list)
