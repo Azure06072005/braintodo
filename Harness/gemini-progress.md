@@ -1,5 +1,28 @@
 # Progress Log (Gemini sessions) — braintodo
 
+## Session — 2026-08-19 (Frontend Testing Setup & Feature Verification)
+- **Completed**: Vitest setup and unit test suites for frontend hooks, forms, pages, and mock data.
+  - Added `frontend/src/test/setup.js` with `MemoryStorage`, `crypto.randomUUID`, and `FakeWebSocket` stubs.
+  - Created `frontend/src/pages/LoginPage.test.jsx` (3 tests).
+  - Verified `frontend/src/pages/RegisterPage.test.jsx` (2 tests).
+  - Verified `frontend/src/hooks/useAuth.test.js` (6 tests).
+  - Verified `frontend/src/hooks/useGraphData.test.js` (11 tests).
+  - Verified `frontend/src/components/NodeForm.test.jsx` (5 tests).
+  - Verified `frontend/src/components/EdgeForm.test.jsx` (5 tests).
+  - Verified `frontend/src/data/mockData.test.js` (6 tests).
+  - Ensured label accessibility nesting in `NodeForm.jsx` and `EdgeForm.jsx`.
+  - Updated `Harness/feature_list.json` to mark FE002, FE004, FE005, FE006, FE009, FE010 as `passing`.
+- **Verification Evidence**:
+  - Frontend Tests: `npm run test` -> 7 files passed, 38/38 tests passed.
+  - Frontend Build: `npm run build` -> 610 modules transformed, clean bundle.
+  - Frontend Lint: `npm run lint` -> oxlint 0 warnings, 0 errors.
+  - Backend Tests: `pytest` -> 107 passed, 1 skipped in 28.82s.
+  - Backend Linters & Types: `ruff check .` passed (0 errors), `mypy src tests` passed (0 issues in 84 files).
+- **Status**: FE002, FE004, FE005, FE006, FE009, FE010 flipped to `passing`.
+- **Next Steps**:
+  1. Add tests for `GraphCanvas.jsx`, `SearchBar.jsx`, `TopBar.jsx`, `NodeDetailPanel.jsx` (FE001, FE003, FE007, FE008, FE011, FE012, FE014).
+  2. Perform end-to-end testing with Docker Compose services.
+
 ## Session — 2026-08-17 (F020 Auth Enforcement & Multi-tenant Graph Isolation)
 - **Completed**: F020 (Auth enforcement + per-user graph isolation) + pre-existing bug fixes in `graph.py` and `test_graph_export_import.py`.
   - Fixed typo import in `src/braintodo/api/graph.py` (`ndoes` -> `nodes`).

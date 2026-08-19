@@ -3,6 +3,28 @@
 Update this at the end of every session (Principle 5 & 12). This is what the
 next session reads to avoid starting from zero.
 
+## Session — 2026-08-19 (Frontend Test Suite & Feature Verification)
+- Completed: Vitest configuration, jsdom setup, and component/hook unit tests.
+  - Setup: [setup.js](file:///D:/AI/braintodo/frontend/src/test/setup.js) with `MemoryStorage`, `crypto.randomUUID`, and `FakeWebSocket` stubs.
+  - Tests passing (7 files, 38/38 tests):
+    - `src/pages/RegisterPage.test.jsx` (FE002, 2 tests)
+    - `src/pages/LoginPage.test.jsx` (FE004, 3 tests)
+    - `src/hooks/useAuth.test.js` (FE005, 6 tests)
+    - `src/hooks/useGraphData.test.js` (FE006, 11 tests)
+    - `src/components/NodeForm.test.jsx` (FE009, 5 tests)
+    - `src/components/EdgeForm.test.jsx` (FE010, 5 tests)
+    - `src/data/mockData.test.js` (6 tests)
+  - Accessibility: Form inputs nested inside `<label>` in `NodeForm.jsx` and `EdgeForm.jsx`.
+  - Feature list: FE002, FE004, FE005, FE006, FE009, FE010 marked `passing` in `Harness/feature_list.json`.
+- In progress: —
+- Blocked: —
+- Verification evidence:
+  - Frontend: `npm run test` (7 passed, 38 passed), `npm run build` (610 modules transformed), `npm run lint` (0 warnings, 0 errors).
+  - Backend: `pytest` (107 passed, 1 skipped), `ruff check .` (clean), `mypy src tests` (0 errors in 84 files).
+- Next session should:
+  1. Add tests for remaining frontend components (`GraphCanvas.jsx`, `SearchBar.jsx`, `TopBar.jsx`, `NodeDetailPanel.jsx`).
+  2. Perform end-to-end testing with Docker Compose services.
+
 ## Prior sessions (reconstructed summary — exact session boundaries/dates unknown)
 - Completed: F001–F019 (backend) and FE013, FE015, FE016 (frontend), per
   prior session's self-report:
@@ -14,10 +36,7 @@ next session reads to avoid starting from zero.
   - FE016 — export/import UI wired to F019.
 - In progress: —
 - Blocked: —
-- **Unresolved critical issue (F020):** no auth enforcement on graph API
-  routes — every endpoint is publicly reachable without a token, and `Node`
-  has no `owner_id`, so all users currently share one graph. This was the
-  explicit top priority carried into the next session and is still open.
+- **F020 completed**: Auth enforcement + per-user graph isolation implemented and verified (107 tests passing).
 - Learnings carried forward (see `conventions.md` / `DECISIONS.md` for full
   detail):
   - Deliver complete files via tools, never chat-pasted diffs — manual
@@ -46,13 +65,3 @@ next session reads to avoid starting from zero.
      repo's router/page/component list.
   3. Resume work on **F020** (auth enforcement + `owner_id` on `Node`) —
      this remains the top open priority and the only feature marked `active`.
-
-<!--
-Template for future entries:
-
-## Session N — YYYY-MM-DD
-- Completed: F0xx (name) — all tests passing, evidence: commit <hash>
-- In progress: F0yy (name) — what's done, what's left
-- Blocked: (dependency / decision needed, or "none")
-- Next session should: <one concrete next action>
--->
