@@ -153,8 +153,8 @@ trash/
 *.svg
 
 # Any custom big data folder
-data/
-datasets/
+/data/
+/datasets/
 models/
 storage/
 out/
