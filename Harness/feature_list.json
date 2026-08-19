@@ -5,65 +5,65 @@
       "id": "F001",
       "name": "Node CRUD",
       "behavior": "Create/read/update/delete an idea Node (title, content, tags, status, importance weight) via REST",
-      "verification": "pytest backend/tests/test_nodes.py -x",
+      "verification": "pytest tests/test_nodes.py -x",
       "state": "passing",
-      "evidence": "reported complete in prior session summary — RE-VERIFY, exact test path unconfirmed"
+      "evidence": "pytest passed; 107 full suite passed"
     },
     {
       "id": "F002",
       "name": "Edge CRUD with typed relations",
       "behavior": "Create/read/update/delete an Edge between two Nodes with a relation type (e.g. leads_to, resolves, extends, contradicts)",
-      "verification": "pytest backend/tests/test_edges.py -x",
+      "verification": "pytest tests/test_edges.py -x",
       "state": "passing",
-      "evidence": "reported complete in prior session summary — RE-VERIFY, exact test path unconfirmed"
+      "evidence": "pytest passed; 107 full suite passed"
     },
     {
       "id": "F003",
       "name": "Text embedding pipeline",
       "behavior": "Node content is converted to a semantic text embedding via a Transformer model",
-      "verification": "pytest backend/tests/test_embedding.py -x",
+      "verification": "pytest tests/test_embedding.py -x",
       "state": "passing",
-      "evidence": "reported complete in prior session summary — RE-VERIFY, exact test path unconfirmed"
+      "evidence": "pytest tests/test_embedding.py -x passed 3/3 tests; 107 full suite passed"
     },
     {
       "id": "F004",
       "name": "Graph-aware node embeddings (GNN)",
       "behavior": "Text embeddings combined with the adjacency matrix through a GCN/GAT/GraphSAGE layer to produce graph-aware node embeddings",
-      "verification": "pytest backend/tests/test_gnn_embedding.py -x",
+      "verification": "pytest tests/test_gnn.py tests/test_gnn_api.py tests/test_gnn_service.py -x",
       "state": "passing",
-      "evidence": "reported complete in prior session summary — RE-VERIFY, exact test path unconfirmed"
+      "evidence": "pytest tests/test_gnn*.py passed 9/9 tests; 107 full suite passed"
     },
     {
       "id": "F005",
       "name": "Link prediction / smart link suggestions",
       "behavior": "Endpoint returns unconnected node pairs with a similarity score >= threshold as suggested links",
-      "verification": "pytest backend/tests/test_link_prediction.py -x",
+      "verification": "pytest tests/test_link_prediction.py tests/test_links_api.py -x",
       "state": "passing",
-      "evidence": "reported complete in prior session summary — RE-VERIFY, exact test path unconfirmed"
+      "evidence": "pytest tests/test_link*.py passed 6/6 tests; 107 full suite passed"
     },
     {
       "id": "F006",
       "name": "Community detection / clustering",
       "behavior": "Nodes are grouped into color-coded clusters ('mind regions') based on graph + semantic similarity",
-      "verification": "pytest backend/tests/test_clustering.py -x",
+      "verification": "pytest tests/test_clustering.py tests/test_clusters_api.py -x",
       "state": "passing",
-      "evidence": "reported complete in prior session summary — RE-VERIFY, exact test path unconfirmed"
+      "evidence": "pytest tests/test_cluster*.py passed 6/6 tests; 107 full suite passed"
     },
     {
       "id": "F007",
       "name": "Graph topology analytics",
       "behavior": "Compute degree centrality, betweenness centrality, and PageRank per node",
-      "verification": "pytest backend/tests/test_topology.py -x",
+      "verification": "pytest tests/test_topology.py -x",
       "state": "passing",
-      "evidence": "reported complete in prior session summary — RE-VERIFY, exact test path unconfirmed"
+      "evidence": "pytest tests/test_topology.py passed 6/6 tests; 107 full suite passed"
     },
     {
       "id": "F008",
       "name": "Semantic + topological search",
       "behavior": "Search endpoint supports keyword search combined with sub-graph / breadth-first expansion from a seed node",
-      "verification": "pytest backend/tests/test_search.py -x",
+      "verification": "pytest tests/test_search.py tests/test_search_api.py -x",
       "state": "passing",
-      "evidence": "reported complete in prior session summary — RE-VERIFY, exact test path unconfirmed"
+      "evidence": "pytest tests/test_search*.py passed 9/9 tests; 107 full suite passed"
     },
     {
       "id": "F009-F018",
@@ -77,17 +77,65 @@
       "id": "F019",
       "name": "Graph export/import with WebSocket broadcast",
       "behavior": "Export the full graph (nodes+edges) to a file and re-import it; other connected clients receive a WebSocket broadcast when the graph changes via import",
-      "verification": "pytest backend/tests/test_export_import.py -x",
+      "verification": "pytest tests/test_graph_export_import.py -x",
       "state": "passing",
-      "evidence": "reported complete in prior session summary — RE-VERIFY, exact test path unconfirmed"
+      "evidence": "pytest tests/test_graph_export_import.py passed; 107 full suite passed"
     },
     {
       "id": "F020",
       "name": "Auth enforcement + per-user graph isolation",
       "behavior": "All graph API routes require a valid JWT; Node model gains an owner_id field so each user sees only their own graph instead of one shared graph",
-      "verification": "pytest backend/tests/test_auth_enforcement.py -x",
+      "verification": "pytest tests/test_auth_enforcement.py -x",
       "state": "passing",
       "evidence": "pytest tests/test_auth_enforcement.py -x passed 21/21 assertions; full test suite 107 passed; ruff check passed; mypy passed 0 errors"
+    },
+    {
+      "id": "FE002",
+      "name": "RegisterPage",
+      "behavior": "User registration form with email/password validation, submittal to /auth/register, and check-your-email confirmation state",
+      "verification": "cd frontend && npm run test -- src/pages/RegisterPage.test.jsx",
+      "state": "passing",
+      "evidence": "npm run test -- src/pages/RegisterPage.test.jsx passed 2/2 tests; clean build & 0 lint errors"
+    },
+    {
+      "id": "FE004",
+      "name": "LoginPage",
+      "behavior": "User login form handling credentials submission, JWT token storage via useAuth, error surfacing, and redirect to /app",
+      "verification": "cd frontend && npm run test -- src/pages/LoginPage.test.jsx",
+      "state": "passing",
+      "evidence": "npm run test -- src/pages/LoginPage.test.jsx passed 3/3 tests; clean build & 0 lint errors"
+    },
+    {
+      "id": "FE005",
+      "name": "useAuth",
+      "behavior": "React hook managing authentication state, token persistence in localStorage, login, register, and logout operations",
+      "verification": "cd frontend && npm run test -- src/hooks/useAuth.test.js",
+      "state": "passing",
+      "evidence": "npm run test -- src/hooks/useAuth.test.js passed 6/6 tests; clean build & 0 lint errors"
+    },
+    {
+      "id": "FE006",
+      "name": "useGraphData",
+      "behavior": "React hook managing graph state (nodes, edges, clusters, search, topology, import/export) across mock and live sources with WebSocket updates",
+      "verification": "cd frontend && npm run test -- src/hooks/useGraphData.test.js",
+      "state": "passing",
+      "evidence": "npm run test -- src/hooks/useGraphData.test.js passed 11/11 tests; clean build & 0 lint errors"
+    },
+    {
+      "id": "FE009",
+      "name": "NodeForm",
+      "behavior": "Accessible form for creating and editing nodes with title, content, tags, weight, color, shape, and size validations",
+      "verification": "cd frontend && npm run test -- src/components/NodeForm.test.jsx",
+      "state": "passing",
+      "evidence": "npm run test -- src/components/NodeForm.test.jsx passed 5/5 tests; clean build & 0 lint errors"
+    },
+    {
+      "id": "FE010",
+      "name": "EdgeForm",
+      "behavior": "Accessible form for connecting two nodes with source/target selection, relation type, line style, and color",
+      "verification": "cd frontend && npm run test -- src/components/EdgeForm.test.jsx",
+      "state": "passing",
+      "evidence": "npm run test -- src/components/EdgeForm.test.jsx passed 5/5 tests; clean build & 0 lint errors"
     },
     {
       "id": "FE013",
@@ -95,29 +143,21 @@
       "behavior": "React app has a working router (react-router-dom) with routes for the main app views",
       "verification": "npm run build && npm test",
       "state": "passing",
-      "evidence": "reported complete in prior session summary — RE-VERIFY"
-    },
-    {
-      "id": "FE015",
-      "name": "Auth forms + useAuth hook",
-      "behavior": "Login/register forms wired to a useAuth hook (dual mock/live mode) that manages session state",
-      "verification": "npm run build && npm test -- useAuth",
-      "state": "passing",
-      "evidence": "reported complete in prior session summary — RE-VERIFY. NOTE: F020 (backend auth enforcement) is not yet done, so this hook may currently be talking to unprotected endpoints."
+      "evidence": "clean build (610 modules transformed) and full test suite passing (7 files, 38 passed)"
     },
     {
       "id": "FE016",
       "name": "Export/import UI",
       "behavior": "UI to trigger graph export (download) and import (upload), reflecting F019 backend endpoints",
-      "verification": "npm run build && npm test -- exportImport",
+      "verification": "cd frontend && npm run test -- src/hooks/useGraphData.test.js",
       "state": "passing",
-      "evidence": "reported complete in prior session summary — RE-VERIFY"
+      "evidence": "useGraphData.test.js export/import tests passed 2/2; clean build"
     },
     {
-      "id": "FE001-FE012,FE014",
-      "name": "Remaining frontend features (D3 graph canvas, node/edge editing UI, clustering visualization, etc.)",
-      "behavior": "UNCONFIRMED — original spec's FE001-FE012 and FE014 weren't itemized in the info available; needs reconstruction from the actual repo's src/pages and src/components",
-      "verification": "TBD — clone repo and list frontend/src/pages, frontend/src/components to reconstruct real entries",
+      "id": "FE001,FE003,FE007,FE008,FE011,FE012,FE014",
+      "name": "Remaining frontend features (D3 graph canvas, mind region clustering visualizer, search bar, etc.)",
+      "behavior": "UNCONFIRMED — remaining frontend items to be itemized and tested individually",
+      "verification": "TBD",
       "state": "not_started",
       "evidence": null
     }

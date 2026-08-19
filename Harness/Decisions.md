@@ -6,6 +6,21 @@ log entry was written (reconstructed from prior session summaries); the
 underlying decisions were made in earlier sessions whose exact dates weren't
 recorded — fix the dates if you have the real commit history.
 
+## 2026-08-17: Accessible form input nesting inside `<label>`
+- Reason: Wrapping `<input>` and `<select>` children directly inside `<label>` in `Field` helper components (`NodeForm.jsx`, `EdgeForm.jsx`) ensures accessible label association without requiring explicit `id`/`htmlFor` boilerplate across dynamically instantiated form controls.
+- Rejected: Manually generating unique `htmlFor` / `id` strings for every form field or leaving labels detached.
+- Constraint: Future form components should nest input controls inside `<label>` or ensure explicit `htmlFor` association for accessibility and standard `@testing-library/react` `getByLabelText` compatibility.
+
+## 2026-08-17: Anchor `.gitignore` data rules to root (`/data/`, `/datasets/`)
+- Reason: Bare `data/` rule inadvertently ignored `frontend/src/data/mockData.js`, causing mock datasets and their tests to disappear from version control.
+- Rejected: Unanchored `data/` wildcard.
+- Constraint: Data directories must be anchored as `/data/` and `/datasets/` in root `.gitignore`.
+
+## 2026-08-17: Vitest + jsdom with lightweight browser API fakes
+- Reason: Unit and component tests need rapid execution in jsdom without running a real browser or spinning up the live backend/WebSocket servers. `MemoryStorage`, `crypto.randomUUID`, and `FakeWebSocket` stubs in `src/test/setup.js` provide full hook and UI testability while preventing import chain crashes in jsdom.
+- Rejected: Heavy browser test harnesses (Cypress/Playwright) for unit logic or skipping mock-mode test coverage.
+- Constraint: Frontend test suite lives under `vitest run` with jsdom environment configured in `vite.config.js` and `src/test/setup.js`.
+
 ## 2026-08-16: Always deliver complete files, never chat-pasted diffs
 - Reason: manual copy-paste from chat repeatedly corrupted files (truncated
   replacements, transcription typos like `ndoes` → `nodes`).
@@ -42,10 +57,3 @@ recorded — fix the dates if you have the real commit history.
 - Constraint: every session starts with `git clone` + running the full
   verification pipeline (`verification.md`) before believing any prior
   "passing" claim.
-
-<!--
-## YYYY-MM-DD: Short title of the decision
-- Reason: why this option was chosen
-- Rejected: the alternative(s) considered, and why not
-- Constraint: anything this decision locks in going forward
--->
