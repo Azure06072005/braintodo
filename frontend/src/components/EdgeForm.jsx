@@ -98,8 +98,8 @@ function Field({ label, children }) {
     <div style={{ marginBottom: 10 }}>
       <label style={{ display: "block", fontSize: 11.5, color: theme.textMuted, marginBottom: 4 }}>
         {label}
+        {children}
       </label>
-      {children}
     </div>
   );
 }

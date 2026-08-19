@@ -146,8 +146,8 @@ function Field({ label, children, style }) {
     <div style={{ marginBottom: 10, ...style }}>
       <label style={{ display: "block", fontSize: 11.5, color: theme.textMuted, marginBottom: 4 }}>
         {label}
+        {children}
       </label>
-      {children}
     </div>
   );
 }
