@@ -2,9 +2,10 @@ import { useState } from "react";
 import { theme } from "../theme";
 
 export default function EdgeForm({ nodes, defaultSourceId, onSubmit, onCancel }) {
-  const [sourceId, setSourceId] = useState(defaultSourceId || nodes[0]?.id || "");
+  const initialSourceId = defaultSourceId || nodes[0]?.id || "";
+  const [sourceId, setSourceId] = useState(initialSourceId);
   const [targetId, setTargetId] = useState(
-    nodes.find((n) => n.id !== defaultSourceId)?.id || ""
+    nodes.find((n) => n.id !== initialSourceId)?.id || ""
   );
   const [relationType, setRelationType] = useState("related_to");
   const [style, setStyle] = useState("solid");

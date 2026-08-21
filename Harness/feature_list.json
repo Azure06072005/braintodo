@@ -154,8 +154,32 @@
       "evidence": "useGraphData.test.js export/import tests passed 2/2; clean build"
     },
     {
-      "id": "FE001,FE003,FE007,FE008,FE011,FE012,FE014",
-      "name": "Remaining frontend features (D3 graph canvas, mind region clustering visualizer, search bar, etc.)",
+      "id": "FE007",
+      "name": "AppPage",
+      "behavior": "Main application view orchestrating modals, node/edge creation, selection, deletion, search integration, and mock/live source switching",
+      "verification": "cd frontend && npm run test -- src/pages/AppPage.test.jsx",
+      "state": "passing",
+      "evidence": "npm run test -- src/pages/AppPage.test.jsx passed 8/8 tests; clean build & 0 lint errors"
+    },
+    {
+      "id": "FE012",
+      "name": "SearchBar",
+      "behavior": "Search input component handling query submission, matches dropdown with neighborhood summary, and clearing search state",
+      "verification": "cd frontend && npm run test -- src/components/SearchBar.test.jsx",
+      "state": "passing",
+      "evidence": "npm run test -- src/components/SearchBar.test.jsx passed 6/6 tests; clean build & 0 lint errors"
+    },
+    {
+      "id": "FE014",
+      "name": "ImportExportControls",
+      "behavior": "Export/import controls providing JSON file export download, file upload import with feedback/skipped-edge summaries, error handling, and in-flight disable state",
+      "verification": "cd frontend && npm run test -- src/components/ImportExportControls.test.jsx",
+      "state": "passing",
+      "evidence": "npm run test -- src/components/ImportExportControls.test.jsx passed 6/6 tests; clean build & 0 lint errors"
+    },
+    {
+      "id": "FE001,FE003,FE008,FE011",
+      "name": "Remaining frontend features (D3 graph canvas, mind region clustering visualizer, TopBar, NodeDetailPanel)",
       "behavior": "UNCONFIRMED — remaining frontend items to be itemized and tested individually",
       "verification": "TBD",
       "state": "not_started",
