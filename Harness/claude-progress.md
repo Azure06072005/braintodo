@@ -3,18 +3,18 @@
 Update this at the end of every session (Principle 5 & 12). This is what the
 next session reads to avoid starting from zero.
 
-## Session — 2026-08-21 (EdgeForm Fix, Component Tests, Harness Updates & Vercel Verification)
+## Session — 2026-08-21 (EdgeForm Fix, Full Component & Page Tests, Harness Updates & Vercel Verification)
 - Completed:
   - Fixed `frontend/src/components/EdgeForm.jsx` bug where initial `targetId` collided with `sourceId` on opening without pre-selection.
-  - Added unit test suites: `SearchBar.test.jsx` (6 tests), `ImportExportControls.test.jsx` (6 tests), `src/pages/AppPage.test.jsx` (8 tests).
+  - Added unit test suites: `LandingPage.test.jsx` (2 tests), `VerifyEmailPage.test.jsx` (3 tests), `NodeDetailPanel.test.jsx` (6 tests), `SearchBar.test.jsx` (6 tests), `ImportExportControls.test.jsx` (6 tests), `src/pages/AppPage.test.jsx` (8 tests).
   - Fixed `vercel.json` configuration paths from `braintodo-frontend` to `frontend`.
-  - Updated `feature_list.json` marking `FE007`, `FE012`, `FE014` as `passing`.
+  - Itemized `F009-F018` into individual passing features and updated `FE001`, `FE003`, `FE007`, `FE011`, `FE012`, `FE014` as `passing` in `feature_list.json`.
   - Updated `Decisions.md` with EdgeForm state resolution and GraphCanvas test stubbing rationale.
 - Verification evidence:
-  - Frontend: `npm run test` (10 files passed, 58/58 passed), `npm run build` (610 modules transformed), `npm run lint` (0 warnings, 0 errors).
+  - Frontend: `npm run test` (13 files passed, 69/69 passed), `npm run build` (610 modules transformed), `npm run lint` (0 warnings, 0 errors across 37 files).
   - Backend: `pytest` (107 passed, 1 skipped), `ruff check .` (clean), `mypy src tests` (0 errors in 84 files).
 - Next session should:
-  1. Add tests for remaining frontend components (`GraphCanvas.jsx`, `TopBar.jsx`, `NodeDetailPanel.jsx`).
+  1. Add tests for `GraphCanvas.jsx` (FE008).
   2. Perform end-to-end testing with Docker Compose services.
 
 ## Session — 2026-08-19 (Frontend Test Suite & Feature Verification)
