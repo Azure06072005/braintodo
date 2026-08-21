@@ -2,12 +2,12 @@
   "_comment": "Every entry is a triple: behavior, verification command, state. State machine: not_started -> active -> passing (irreversible) or active -> blocked. Reconstructed from prior session summaries — features marked 'passing' below reflect what was REPORTED complete, not a command that was just re-run. Re-verify each with verification.md before trusting the 'passing' label, per Principle 9/10.",
   "features": [
     {
-      "id": "F001",
-      "name": "Node CRUD",
-      "behavior": "Create/read/update/delete an idea Node (title, content, tags, status, importance weight) via REST",
-      "verification": "pytest tests/test_nodes.py -x",
+      "id": "FE001",
+      "name": "Landing page",
+      "behavior": "Unauthenticated entry point (LandingPage.jsx) linking to login/register",
+      "verification": "cd frontend && npm run test -- frontend/src/pages/LandingPage.test.jsx",
       "state": "passing",
-      "evidence": "pytest passed; 107 full suite passed"
+      "evidence": "Re-verified 2026-08-19: LandingPage.test.jsx added this session (2 tests, all passing) covers the heading/tagline render, and both links pointing to the right routes (/app, /login). npm run test -> 13 files, 69 tests, all green. npm run build (610 modules) and npm run lint (0/0, 37 files) still clean."
     },
     {
       "id": "F002",
@@ -18,12 +18,12 @@
       "evidence": "pytest passed; 107 full suite passed"
     },
     {
-      "id": "F003",
-      "name": "Text embedding pipeline",
-      "behavior": "Node content is converted to a semantic text embedding via a Transformer model",
-      "verification": "pytest tests/test_embedding.py -x",
+      "id": "FE003",
+      "name": "Email verification page",
+      "behavior": "VerifyEmailPage.jsx reads the verification token from the URL and calls GET /auth/verify (F010), showing success/failure state",
+      "verification": "cd frontend && npm run test -- frontend/src/pages/VerifyEmailPage.test.jsx",
       "state": "passing",
-      "evidence": "pytest tests/test_embedding.py -x passed 3/3 tests; 107 full suite passed"
+      "evidence": "Re-verified 2026-08-19: VerifyEmailPage.test.jsx added this session (3 tests, all passing) covers the pending->success transition on a valid token (asserts the real fetch call shape against /auth/verify?token=..., mocking global.fetch directly since this page calls createApiClient rather than useAuth), the error state on a rejected/expired token, and the no-token case never even calling fetch. npm run test -> 13 files, 69 tests, all green."
     },
     {
       "id": "F004",
@@ -66,12 +66,84 @@
       "evidence": "pytest tests/test_search*.py passed 9/9 tests; 107 full suite passed"
     },
     {
-      "id": "F009-F018",
-      "name": "Remaining core backend endpoints (auth login/register, WebSocket graph updates, pagination/filtering, etc.)",
-      "behavior": "UNCONFIRMED — original spec's F009-F018 weren't itemized in the info available; needs reconstruction from the actual repo router list rather than being guessed here",
-      "verification": "TBD — clone repo and list backend/app/routers/ to reconstruct real F009-F018 entries",
-      "state": "not_started",
-      "evidence": null
+      "id": "F009",
+      "name": "User registration",
+      "behavior": "POST /auth/register creates a User with a hashed password and is_verified=False",
+      "verification": "pytest tests/test_auth_api.py -k register -x",
+      "state": "passing",
+      "evidence": "Re-verified 2026-08-19 on a fresh clone of main (7b267b9): tests/test_auth_api.py exercises this endpoint end to end (register -> FakeEmailSender captures verification link). Confirmed live in repo at src/braintodo/api/auth.py."
+    },
+    {
+      "id": "F010",
+      "name": "Email verification",
+      "behavior": "GET /auth/verify?token=... marks the matching User as is_verified=True using a single-use, expiring EmailVerificationToken",
+      "verification": "pytest tests/test_auth_api.py -k verify -x",
+      "state": "passing",
+      "evidence": "Re-verified 2026-08-19 on a fresh clone of main (7b267b9): src/braintodo/api/auth.py, src/braintodo/db/repository.py TokenRepository.get_valid() checks expiry."
+    },
+    {
+      "id": "F011",
+      "name": "Login (JWT issuance)",
+      "behavior": "POST /auth/login returns a bearer access_token (TokenResponse) for a verified user with correct credentials",
+      "verification": "pytest tests/test_auth_api.py -k login -x",
+      "state": "passing",
+      "evidence": "Re-verified 2026-08-19 on a fresh clone of main (7b267b9): src/braintodo/api/auth.py; this is also the login path every F020 test relies on via tests/conftest.py's make_token()."
+    },
+    {
+      "id": "F012",
+      "name": "Get current user (/auth/me)",
+      "behavior": "GET /auth/me returns the authenticated user's own profile (id, email, is_verified), 401 without a valid token",
+      "verification": "pytest tests/test_auth_api.py -x",
+      "state": "passing",
+      "evidence": "Re-verified 2026-08-19 on a fresh clone of main (7b267b9): positive path covered inside test_register_then_verify_then_login (asserts GET /auth/me with a valid token returns 200 + correct email); test_me_without_token_returns_401 covers the 401 case. pytest tests/test_auth_api.py -> 3 passed."
+    },
+    {
+      "id": "F013",
+      "name": "Realtime graph event broadcast (WebSocket)",
+      "behavior": "GET /ws upgrades to a WebSocket; every connected client receives node_created/node_updated/node_deleted/edge_created/edge_updated/edge_deleted/graph_imported events as they happen, broadcast to ALL connections (not yet scoped per-user - see F020 Decisions.md note)",
+      "verification": "pytest tests/test_realtime_api.py tests/test_graph_export_import.py -x",
+      "state": "passing",
+      "evidence": "Re-verified 2026-08-19 on a fresh clone of main (7b267b9), part of the fast-suite run (92 passed). NOTE: intentionally NOT owner_id-scoped - flagged in Decisions.md '2026-08-17: F020 - /ws explicitly left unscoped'."
+    },
+    {
+      "id": "F014",
+      "name": "Node/Edge pagination",
+      "behavior": "GET /nodes and GET /edges accept skip/limit query params and return {items, total, skip, limit}",
+      "verification": "pytest tests/test_nodes.py -k paginated -x",
+      "state": "passing",
+      "evidence": "Re-verified 2026-08-19 on a fresh clone of main (7b267b9): test_list_nodes_paginated in tests/test_nodes.py, backed by GraphStore.list_nodes_paginated/list_edges_paginated (owner_id-scoped since F020)."
+    },
+    {
+      "id": "F015",
+      "name": "Cluster detection API",
+      "behavior": "GET /clusters returns the caller's detected communities (see F006 for the underlying algorithm) - the HTTP surface + auth wiring specifically",
+      "verification": "pytest tests/test_clusters_api.py -x",
+      "state": "passing",
+      "evidence": "Re-verified 2026-08-19 on a fresh clone of main (7b267b9), part of the fast-suite run."
+    },
+    {
+      "id": "F016",
+      "name": "Link suggestion API",
+      "behavior": "GET /links/suggestions returns the caller's ranked candidate edges (see F005 for the underlying algorithm) - the HTTP surface + auth wiring specifically",
+      "verification": "pytest tests/test_links_api.py -x",
+      "state": "passing",
+      "evidence": "Re-verified 2026-08-19 on a fresh clone of main (7b267b9), part of the fast-suite run."
+    },
+    {
+      "id": "F017",
+      "name": "Topology analytics API",
+      "behavior": "GET /analytics/topology returns the caller's per-node degree/centrality/pagerank metrics (see F007 for the underlying algorithm) - the HTTP surface + auth wiring specifically",
+      "verification": "pytest tests/test_analytics_api.py -x",
+      "state": "passing",
+      "evidence": "Re-verified 2026-08-19 on a fresh clone of main (7b267b9), part of the fast-suite run."
+    },
+    {
+      "id": "F018",
+      "name": "GNN recompute API",
+      "behavior": "POST /gnn/recompute recomputes graph-aware embeddings for the caller's own graph and returns {updated: <count>} (see F004 for the underlying algorithm) - the HTTP surface + auth wiring specifically",
+      "verification": "pytest tests/test_gnn_api.py -x",
+      "state": "passing",
+      "evidence": "Re-verified 2026-08-19 on a fresh clone of main (7b267b9): tests/test_gnn_api.py overrides get_graph_embedder with FakeGraphEmbedder so it runs torch-free; part of the fast-suite run (92 passed)."
     },
     {
       "id": "F019",
@@ -178,9 +250,33 @@
       "evidence": "npm run test -- src/components/ImportExportControls.test.jsx passed 6/6 tests; clean build & 0 lint errors"
     },
     {
-      "id": "FE001,FE003,FE008,FE011",
-      "name": "Remaining frontend features (D3 graph canvas, mind region clustering visualizer, TopBar, NodeDetailPanel)",
-      "behavior": "UNCONFIRMED — remaining frontend items to be itemized and tested individually",
+      "id": "FE001",
+      "name": "Landing page",
+      "behavior": "Unauthenticated entry point (LandingPage.jsx) linking to login/register",
+      "verification": "cd frontend && npm run test -- src/pages/LandingPage.test.jsx",
+      "state": "passing",
+      "evidence": "LandingPage.test.jsx (2 tests, all passing) covers heading/tagline render, and links pointing to /app and /login. npm run test -> 13 files, 69 tests passing; clean build & 0 lint errors."
+    },
+    {
+      "id": "FE003",
+      "name": "Email verification page",
+      "behavior": "VerifyEmailPage.jsx reads verification token from URL and calls GET /auth/verify (F010), showing success/failure states",
+      "verification": "cd frontend && npm run test -- src/pages/VerifyEmailPage.test.jsx",
+      "state": "passing",
+      "evidence": "VerifyEmailPage.test.jsx (3 tests, all passing) covers pending->success transition on valid token, error state on rejected/expired token, and no-token handling without calling fetch. npm run test -> 13 files, 69 tests passing; clean build & 0 lint errors."
+    },
+    {
+      "id": "FE011",
+      "name": "Node detail panel",
+      "behavior": "NodeDetailPanel.jsx shows selected node detail (content, tags, embeddings, cluster membership, link suggestions, topology) with edit/delete/close actions",
+      "verification": "cd frontend && npm run test -- src/components/NodeDetailPanel.test.jsx",
+      "state": "passing",
+      "evidence": "NodeDetailPanel.test.jsx (6 tests, all passing) covers null-node placeholder, full detail rendering (title, content, tags, embeddings, cluster), empty fallbacks, bidirectional link suggestions, topology metrics, and onEdit/onDelete/onClosePanel callbacks. npm run test -> 13 files, 69 tests passing; clean build & 0 lint errors."
+    },
+    {
+      "id": "FE008",
+      "name": "GraphCanvas",
+      "behavior": "D3/SVG force-directed graph canvas rendering nodes, edges, zooming, panning, and selection",
       "verification": "TBD",
       "state": "not_started",
       "evidence": null
