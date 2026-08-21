@@ -1,5 +1,26 @@
 # Progress Log (Gemini sessions) — braintodo
 
+## Session — 2026-08-21 (EdgeForm Fix, Frontend Component Tests, Harness Updates & Vercel Verification)
+- **Completed**: EdgeForm default source/target bug fix, unit test suites for SearchBar, ImportExportControls, and AppPage integration test suite, Vercel configuration fix.
+  - Fixed `frontend/src/components/EdgeForm.jsx` to resolve `initialSourceId` first so `targetId` never defaults to the same node as `sourceId` on initial modal open.
+  - Added `frontend/src/components/SearchBar.test.jsx` (6 tests).
+  - Added `frontend/src/components/ImportExportControls.test.jsx` (6 tests).
+  - Added `frontend/src/pages/AppPage.test.jsx` (8 tests).
+  - Cleaned up misplaced `frontend/src/components/AppPage.test.jsx`.
+  - Fixed `vercel.json` paths from `braintodo-frontend` to `frontend` for correct deployment builds.
+  - Updated `Harness/feature_list.json` marking `FE007` (AppPage), `FE012` (SearchBar), `FE014` (ImportExportControls) as `passing`.
+  - Updated `Harness/Decisions.md` documenting `EdgeForm` initial source resolution and `GraphCanvas` stubbing rationale.
+- **Verification Evidence**:
+  - Frontend Tests: `npm run test` -> 10 files passed, 58/58 tests passed.
+  - Frontend Build: `npm run build` -> 610 modules transformed, clean bundle.
+  - Frontend Lint: `npm run lint` -> oxlint 0 warnings, 0 errors.
+  - Backend Tests: `pytest` -> 107 passed, 1 skipped in 28.59s.
+  - Backend Linters & Types: `ruff check .` passed (0 errors), `mypy src tests` passed (0 issues in 84 files).
+- **Status**: FE007, FE012, FE014 marked as `passing`.
+- **Next Steps**:
+  1. Add tests for remaining frontend components: `GraphCanvas.jsx`, `TopBar.jsx`, `NodeDetailPanel.jsx` (FE001, FE003, FE008, FE011).
+  2. Perform end-to-end testing with Docker Compose services.
+
 ## Session — 2026-08-19 (Frontend Testing Setup & Feature Verification)
 - **Completed**: Vitest setup and unit test suites for frontend hooks, forms, pages, and mock data.
   - Added `frontend/src/test/setup.js` with `MemoryStorage`, `crypto.randomUUID`, and `FakeWebSocket` stubs.

@@ -6,6 +6,14 @@ log entry was written (reconstructed from prior session summaries); the
 underlying decisions were made in earlier sessions whose exact dates weren't
 recorded — fix the dates if you have the real commit history.
 
+## 2026-08-21: EdgeForm initial target node derivation from resolved initialSourceId
+- Reason: When `defaultSourceId` is null (e.g. user clicks "+ Liên kết" without pre-selecting a node), `sourceId` defaults to `nodes[0]?.id`. Filtering `nodes.find(n => n.id !== defaultSourceId)` checked against `null` (matching `nodes[0]`), causing `sourceId === targetId` and failing form validation immediately. Resolving `initialSourceId = defaultSourceId || nodes[0]?.id || ""` first and finding `nodes.find(n => n.id !== initialSourceId)` guarantees distinct source and target defaults whenever `>= 2` nodes exist.
+- Constraint: Form default states with inter-field uniqueness constraints must evaluate resolved defaults, not uncoerced props.
+
+## 2026-08-21: Lightweight GraphCanvas stub in AppPage orchestration tests with real useGraphData
+- Reason: GraphCanvas is D3/SVG-heavy and tested separately for visual geometry. AppPage tests focus on orchestration (modals, search wiring, delete confirmation, mock/live source reset) against the real `useGraphData("mock")` hook without mock pollution.
+- Constraint: Page orchestration tests stub visual canvas components but execute real hook and state management logic.
+
 ## 2026-08-17: Accessible form input nesting inside `<label>`
 - Reason: Wrapping `<input>` and `<select>` children directly inside `<label>` in `Field` helper components (`NodeForm.jsx`, `EdgeForm.jsx`) ensures accessible label association without requiring explicit `id`/`htmlFor` boilerplate across dynamically instantiated form controls.
 - Rejected: Manually generating unique `htmlFor` / `id` strings for every form field or leaving labels detached.
