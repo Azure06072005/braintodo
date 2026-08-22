@@ -3,6 +3,21 @@
 Update this at the end of every session (Principle 5 & 12). This is what the
 next session reads to avoid starting from zero.
 
+## Session — 2026-08-22 (FE008 GraphCanvas Tests, Live Auth Token Threading & 35/35 Features Passing)
+- Completed:
+  - Fixed live-mode auth token threading across `createApiClient`, `useGraphData`, and `AppPage.jsx`.
+  - Added live-mode token regression tests to `frontend/src/hooks/useGraphData.test.js`.
+  - Added SVGSVGElement width/height polyfill to `src/test/setup.js`.
+  - Created `frontend/src/components/GraphCanvas.test.jsx` (9 tests) covering shape selection, edge lines, dangling edge filtering, node labels, click handlers, cluster hulls, and clean unmount.
+  - Flipped `FE008` (GraphCanvas) to `passing` in `feature_list.json` — all 35 features in the project are now `passing`.
+  - Documented decisions in `Decisions.md`.
+- Verification evidence:
+  - Frontend: `npm run test` (14 files, 80 passed), `npm run build` (610 modules), `npm run lint` (0/0, 38 files).
+  - Backend: `pytest` (113 passed, 1 skipped), `ruff check .` clean, `mypy src tests` 0 errors.
+  - Feature list integrity: 35 unique IDs, all passing, 0 duplicates.
+- Next session should:
+  1. Perform end-to-end integration testing with Docker Compose services.
+
 ## Session — 2026-08-22 (F013 Realtime WebSocket Auth & Per-User Scoping)
 - Completed:
   - Scoped `/ws` broadcasts per owner in `ConnectionManager` (`src/braintodo/realtime/manager.py`).

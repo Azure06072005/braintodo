@@ -31,7 +31,7 @@ function removeById(list, id) {
  * mở kết nối WebSocket /ws để tự cập nhật graph theo thời gian thực —
  * không cần refetch toàn bộ mỗi khi có thay đổi.
  */
-export function useGraphData(source, apiBaseUrl = DEFAULT_API_BASE_URL) {
+export function useGraphData(source, apiBaseUrl = DEFAULT_API_BASE_URL, token = null) {
   const [nodes, setNodes] = useState(mockNodes);
   const [edges, setEdges] = useState(mockEdges);
   const [clusters, setClusters] = useState(mockClusters);
@@ -40,8 +40,8 @@ export function useGraphData(source, apiBaseUrl = DEFAULT_API_BASE_URL) {
   const [error, setError] = useState(null);
   const [realtimeStatus, setRealtimeStatus] = useState("disconnected");
 
-  const client = useMemo(() => createApiClient(apiBaseUrl), [apiBaseUrl]);
-
+  const client = useMemo(() => createApiClient(apiBaseUrl, token), [apiBaseUrl, token]);
+  
   async function refetchAllImpl() {
     const [liveNodes, liveEdges, liveClusters, liveSuggestions] = await Promise.all([
       client.listNodes(),

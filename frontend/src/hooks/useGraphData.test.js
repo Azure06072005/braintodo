@@ -1,5 +1,5 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useGraphData } from "./useGraphData";
 import { mockNodes, mockEdges } from "../data/mockData";
 
@@ -195,6 +195,53 @@ describe("useGraphData (mock mode)", () => {
     await waitFor(() => {
       expect(result.current.nodes).toEqual(mockNodes);
     });
+
+    global.fetch = originalFetch;
+  });
+
+  it("live mode attaches the token as a Bearer Authorization header on REST calls", async () => {
+    const originalFetch = global.fetch;
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({ items: [], total: 0, skip: 0, limit: 200 }),
+    });
+    global.fetch = fetchMock;
+
+    const { unmount } = renderHook(() =>
+      useGraphData("live", "http://localhost:8000", "my-jwt-token")
+    );
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalled();
+    });
+    // Every call the initial live-mode fetch makes (listNodes/listEdges/
+    // getClusters/getLinkSuggestions) should carry the same bearer token -
+    // check at least one, since this is the exact bug that was previously
+    // silently broken (no call carried a token at all).
+    const [, options] = fetchMock.mock.calls[0];
+    expect(options?.headers?.Authorization).toBe("Bearer my-jwt-token");
+
+    unmount();
+    global.fetch = originalFetch;
+  });
+
+  it("live mode with no token sends no Authorization header (matches an unauthenticated GET -> 401 from the real backend)", async () => {
+    const originalFetch = global.fetch;
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 401,
+      json: async () => ({ detail: "Not authenticated" }),
+    });
+    global.fetch = fetchMock;
+
+    const { result } = renderHook(() => useGraphData("live"));
+
+    await waitFor(() => {
+      expect(result.current.error).toBeTruthy();
+    });
+    const [, options] = fetchMock.mock.calls[0];
+    expect(options?.headers?.Authorization).toBeUndefined();
 
     global.fetch = originalFetch;
   });

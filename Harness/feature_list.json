@@ -276,10 +276,10 @@
     {
       "id": "FE008",
       "name": "GraphCanvas",
-      "behavior": "D3/SVG force-directed graph canvas rendering nodes, edges, zooming, panning, and selection",
-      "verification": "TBD",
-      "state": "not_started",
-      "evidence": null
+      "behavior": "D3/SVG force-directed graph canvas rendering nodes, edges, shapes, cluster hulls, and node selection callbacks",
+      "verification": "cd frontend && npm run test -- src/components/GraphCanvas.test.jsx",
+      "state": "passing",
+      "evidence": "GraphCanvas.test.jsx (9 tests, all passing) covers node circle/rect shape dispatch, edge lines, dangling edge filtering, title text labels, onNodeClick dispatch, cluster hull path rendering, dynamic list rerendering, and clean unmount; npm run test -> 14 files, 80 tests passing; clean build & 0 lint errors."
     }
   ]
 }

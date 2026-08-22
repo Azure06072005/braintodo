@@ -3,10 +3,11 @@
  * Azure06072005/braintodo (đã xác nhận từ source code thật).
  */
 
-export function createApiClient(baseUrl) {
-  async function getJson(path, { token } = {}) {
+export function createApiClient(baseUrl, token) {
+  async function getJson(path, { token: overrideToken } = {}) {
+    const effectiveToken = overrideToken ?? token;
     const resp = await fetch(`${baseUrl}${path}`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      headers: effectiveToken ? { Authorization: `Bearer ${effectiveToken}` } : undefined,
     });
     if (!resp.ok) {
       const detail = await resp.json().catch(() => null);
@@ -18,7 +19,10 @@ export function createApiClient(baseUrl) {
   async function sendJson(method, path, body) {
     const resp = await fetch(`${baseUrl}${path}`, {
       method,
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
       body: JSON.stringify(body),
     });
     if (!resp.ok) {
@@ -102,7 +106,8 @@ export function createApiClient(baseUrl) {
     },
 
     connectRealtime(onEvent, { onStatusChange } = {}) {
-      const wsUrl = baseUrl.replace(/^http/, "ws") + "/ws";
+      const wsBase = baseUrl.replace(/^http/, "ws") + "/ws";
+      const wsUrl = token ? `${wsBase}?token=${encodeURIComponent(token)}` : wsBase;
       const socket = new WebSocket(wsUrl);
 
       socket.onopen = () => onStatusChange?.("open");
