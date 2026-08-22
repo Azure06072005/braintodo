@@ -8,9 +8,11 @@ import EdgeForm from "../components/EdgeForm";
 import SearchBar from "../components/SearchBar";
 import ImportExportControls from "../components/ImportExportControls";
 import { useGraphData } from "../hooks/useGraphData";
+import { useAuth } from "../hooks/useAuth";
 import { theme } from "../theme";
 
 export default function AppPage() {
+  const { token } = useAuth();
   const [source, setSource] = useState("mock");
   const [selectedNodeId, setSelectedNodeId] = useState(null);
   const [modal, setModal] = useState(null);
@@ -38,7 +40,7 @@ export default function AppPage() {
     getTopology,
     exportGraph,
     importGraph,
-  } = useGraphData(source);
+  } = useGraphData(source, undefined, token);
 
   const nodesById = useMemo(() => new Map(nodes.map((n) => [n.id, n])), [nodes]);
   const selectedNode = selectedNodeId ? nodesById.get(selectedNodeId) : null;

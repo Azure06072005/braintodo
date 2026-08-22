@@ -65,3 +65,28 @@ FakeWebSocket.CLOSED = 3;
 if (typeof globalThis.WebSocket === "undefined") {
   globalThis.WebSocket = FakeWebSocket;
 }
+
+/**
+ * jsdom implements SVGSVGElement but not its `width`/`height`
+ * (SVGAnimatedLength) properties at all - they're `undefined`, not just
+ * zero. d3-zoom's defaultExtent() reads `svg.width.baseVal.value` whenever
+ * the svg has no `viewBox` attribute (GraphCanvas.jsx doesn't set one), so
+ * WITHOUT this polyfill, any pointer event dispatched anywhere inside a
+ * d3.zoom()-enabled <svg> throws synchronously ("Cannot read properties of
+ * undefined (reading 'baseVal')") - not a bug in the component, a gap in
+ * jsdom's SVG geometry support. Values are fixed rather than measured
+ * (jsdom has no real layout engine either), matching GraphCanvas's own
+ * `clientWidth || 800` / `clientHeight || 600` fallback.
+ */
+if (typeof SVGSVGElement !== "undefined" && !("width" in SVGSVGElement.prototype)) {
+  Object.defineProperty(SVGSVGElement.prototype, "width", {
+    get() {
+      return { baseVal: { value: this.clientWidth || 800 } };
+    },
+  });
+  Object.defineProperty(SVGSVGElement.prototype, "height", {
+    get() {
+      return { baseVal: { value: this.clientHeight || 600 } };
+    },
+  });
+}

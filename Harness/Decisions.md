@@ -6,6 +6,15 @@ log entry was written (reconstructed from prior session summaries); the
 underlying decisions were made in earlier sessions whose exact dates weren't
 recorded — fix the dates if you have the real commit history.
 
+## 2026-08-22: Live-mode Auth Token Threading in useGraphData & AppPage
+- Reason: REST API routes (F020) and `/ws` realtime broadcasts (F013) enforce authentication. Threading `token` from `useAuth()` in `AppPage.jsx` into `useGraphData(source, undefined, token)` and `createApiClient(baseUrl, token)` ensures REST calls attach `Authorization: Bearer <token>` and WebSocket connects with `/ws?token=<token>`.
+- Constraint: Live-mode API hooks must accept and pass auth tokens from auth state.
+
+## 2026-08-22: GraphCanvas Structural SVG Testing Scope & jsdom SVGSVGElement Polyfill
+- Reason: D3 force simulation animates asynchronously over multiple frames and d3-drag accesses mouse event window views not fully implemented in jsdom. Component tests focus on synchronous SVG structural invariants (circle/rect counts, lines, dangling edge filtering, labels, cluster hull paths, click handlers via `fireEvent.click`, and unmount cleanup).
+- Polyfill: `SVGSVGElement.prototype.width/height` polyfill in `src/test/setup.js` provides `baseVal.value` fallbacks for `d3-zoom` in jsdom.
+- Constraint: Canvas tests assert structural DOM presence rather than simulated floating-point coordinates.
+
 ## 2026-08-22: F013 — /ws authenticated via token query param and scoped per-owner
 - Reason: WebSocket handshakes initiated by browser JavaScript cannot include custom HTTP headers (such as `Authorization: Bearer <token>`). Passing the standard JWT access token via `ws://host/ws?token=<access_token>` query parameter allows authenticating the user during handshake without requiring extra handshake protocols.
 - Scoping: `ConnectionManager` tags each active WebSocket with the authenticated `owner_id`. `broadcast()` filters recipient sockets to matching `owner_id`, closing the data-isolation gap where one user's graph edits were previously broadcast to all connected clients.
