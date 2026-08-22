@@ -6,6 +6,37 @@ log entry was written (reconstructed from prior session summaries); the
 underlying decisions were made in earlier sessions whose exact dates weren't
 recorded — fix the dates if you have the real commit history.
 
+## 2026-08-19: Incident — F001/F003 ids overwritten by FE001/FE003 in feature_list.json, restored
+- What happened: commit `8d6979a` ("update components") added the real
+  `FE001` (Landing page) and `FE003` (Email verification page) entries, but
+  in doing so **overwrote** the existing `F001` (Node CRUD) and `F003`
+  (Text embedding pipeline) entries' `id` fields to `"FE001"`/`"FE003"`
+  instead of appending new entries — destroying the original F001/F003
+  tracking entries entirely and leaving two duplicate `FE001`/`FE003` ids
+  in the file (byte-for-byte identical Landing/VerifyEmail entries). Most
+  likely cause: a find/replace or manual edit that matched on the wrong
+  scope. This was caught by a routine "list all ids, check for duplicates"
+  sanity check before trusting a prior session's `feature_list.json`
+  report — the duplicate ids were the tell.
+- Impact: F001 and F003 silently disappeared from tracking even though
+  the underlying features were never broken (`pytest tests/test_nodes.py`
+  and the embedding pipeline tests were still passing the whole time,
+  confirmed on re-verification) — this was a bug in the *harness*, not in
+  the product.
+- Fix: restored `F001`/`F003` verbatim from the last known-good commit
+  (`6fc366f`, before the corruption), re-verified their tests still pass
+  independently rather than trusting the restored content blindly, and
+  removed the duplicate `FE001`/`FE003` entries.
+- Rejected: silently deleting the duplicates without restoring F001/F003 -
+  would have "fixed" the duplicate-id symptom while still leaving two real
+  features permanently untracked.
+- Constraint: **any session that edits `feature_list.json` should end by
+  checking `[f["id"] for f in features]` has no duplicates and covers every
+  expected F*/FE* id**, not just spot-checking the entries it touched. A
+  duplicate or missing id in this file is exactly the kind of silent
+  corruption that's easy to introduce with a careless string replacement
+  and easy to miss without an explicit check.
+
 ## 2026-08-21: EdgeForm initial target node derivation from resolved initialSourceId
 - Reason: When `defaultSourceId` is null (e.g. user clicks "+ Liên kết" without pre-selecting a node), `sourceId` defaults to `nodes[0]?.id`. Filtering `nodes.find(n => n.id !== defaultSourceId)` checked against `null` (matching `nodes[0]`), causing `sourceId === targetId` and failing form validation immediately. Resolving `initialSourceId = defaultSourceId || nodes[0]?.id || ""` first and finding `nodes.find(n => n.id !== initialSourceId)` guarantees distinct source and target defaults whenever `>= 2` nodes exist.
 - Constraint: Form default states with inter-field uniqueness constraints must evaluate resolved defaults, not uncoerced props.

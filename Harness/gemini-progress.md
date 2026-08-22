@@ -1,5 +1,13 @@
 # Progress Log (Gemini sessions) — braintodo
 
+## Session — 2026-08-19 (Incident: F001/F003 Corruption in feature_list.json, Restored)
+- **Completed**: Restored F001 (Node CRUD) and F003 (Text embedding pipeline) in `Harness/feature_list.json` after accidental ID overwrite in prior commit. Removed duplicate FE001/FE003 entries.
+- **Verification Evidence**:
+  - `feature_list.json` validation: 35 unique feature IDs, 0 duplicates.
+  - Backend: `pytest` 107 passed, 1 skipped. `ruff check .` clean. `mypy src tests` 84 files, 0 errors.
+  - Frontend: `npm run test` 13 files, 69 passed. `npm run build` 610 modules. `npm run lint` 0/0.
+- **Status**: 35 total features tracked without corruption or duplicate IDs.
+
 ## Session — 2026-08-21 (EdgeForm Fix, Component & Page Tests, Full Frontend Coverage & Vercel Verification)
 - **Completed**: EdgeForm bugfix, unit test suites for SearchBar, ImportExportControls, LandingPage, VerifyEmailPage, NodeDetailPanel, AppPage integration suite, itemized F009-F018 backend feature list, and Vercel configuration fix.
   - Fixed `frontend/src/components/EdgeForm.jsx` to resolve `initialSourceId` first so `targetId` never defaults to the same node as `sourceId` on initial modal open.

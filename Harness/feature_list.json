@@ -1,13 +1,13 @@
 {
-  "_comment": "Every entry is a triple: behavior, verification command, state. State machine: not_started -> active -> passing (irreversible) or active -> blocked. Reconstructed from prior session summaries — features marked 'passing' below reflect what was REPORTED complete, not a command that was just re-run. Re-verify each with verification.md before trusting the 'passing' label, per Principle 9/10.",
+  "_comment": "Every entry is a triple: behavior, verification command, state. State machine: not_started -> active -> passing (irreversible) or active -> blocked. F001 and F003 were restored 2026-08-19 after a data-corruption bug (commit 8d6979a accidentally overwrote their ids to 'FE001'/'FE003' while adding the real Landing-page/VerifyEmail-page entries, destroying the originals and creating duplicate ids). Restored from the last known-good commit (6fc366f) and re-verified independently on a fresh clone rather than trusted at face value - see Decisions.md for the full incident note and the process change adopted to prevent recurrence.",
   "features": [
     {
-      "id": "FE001",
-      "name": "Landing page",
-      "behavior": "Unauthenticated entry point (LandingPage.jsx) linking to login/register",
-      "verification": "cd frontend && npm run test -- frontend/src/pages/LandingPage.test.jsx",
+      "id": "F001",
+      "name": "Node CRUD",
+      "behavior": "Create/read/update/delete an idea Node (title, content, tags, status, importance weight) via REST",
+      "verification": "pytest tests/test_nodes.py -x",
       "state": "passing",
-      "evidence": "Re-verified 2026-08-19: LandingPage.test.jsx added this session (2 tests, all passing) covers the heading/tagline render, and both links pointing to the right routes (/app, /login). npm run test -> 13 files, 69 tests, all green. npm run build (610 modules) and npm run lint (0/0, 37 files) still clean."
+      "evidence": "pytest passed; 107 full suite passed. Re-confirmed 2026-08-19: this entry's id had been accidentally overwritten to 'FE001' in commit 8d6979a (likely a find/replace mistake while adding the real FE001 Landing-page entry), destroying the original F001 (Node CRUD) tracking entry and creating a duplicate FE001 id. Restored from pre-corruption commit 6fc366f. Re-verified independently on a fresh clone of main (b00fb30): pytest tests/test_nodes.py -x -> passed as part of the 92-test fast suite."
     },
     {
       "id": "F002",
@@ -18,12 +18,12 @@
       "evidence": "pytest passed; 107 full suite passed"
     },
     {
-      "id": "FE003",
-      "name": "Email verification page",
-      "behavior": "VerifyEmailPage.jsx reads the verification token from the URL and calls GET /auth/verify (F010), showing success/failure state",
-      "verification": "cd frontend && npm run test -- frontend/src/pages/VerifyEmailPage.test.jsx",
+      "id": "F003",
+      "name": "Text embedding pipeline",
+      "behavior": "Node content is converted to a semantic text embedding via a Transformer model",
+      "verification": "pytest tests/test_embedding.py -x",
       "state": "passing",
-      "evidence": "Re-verified 2026-08-19: VerifyEmailPage.test.jsx added this session (3 tests, all passing) covers the pending->success transition on a valid token (asserts the real fetch call shape against /auth/verify?token=..., mocking global.fetch directly since this page calls createApiClient rather than useAuth), the error state on a rejected/expired token, and the no-token case never even calling fetch. npm run test -> 13 files, 69 tests, all green."
+      "evidence": "pytest tests/test_embedding.py -x passed 3/3 tests; 107 full suite passed. Re-confirmed 2026-08-19: this entry's id had been accidentally overwritten to 'FE003' in commit 8d6979a (same mistake as F001/FE001 - see that entry's evidence), destroying the original F003 (Text embedding pipeline) tracking entry and creating a duplicate FE003 id. Restored from pre-corruption commit 6fc366f. Re-verified independently on a fresh clone of main (b00fb30): part of the 92-test fast suite (pytest tests/test_embedding.py -x)."
     },
     {
       "id": "F004",

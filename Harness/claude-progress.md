@@ -3,6 +3,63 @@
 Update this at the end of every session (Principle 5 & 12). This is what the
 next session reads to avoid starting from zero.
 
+## Session — 2026-08-19 (incident: F001/F003 corruption in feature_list.json, restored)
+
+Started from a fresh clone of `main` (`b00fb30`, PR #31 merged), which
+includes the prior session's (2026-08-21 entry below — session dates in
+this log aren't strictly chronological, see that entry) EdgeForm fix and
+LandingPage/VerifyEmailPage/NodeDetailPanel/SearchBar/ImportExportControls
+/AppPage tests.
+
+Independently re-verified all of that before touching anything, not
+trusting the prior session's report: `pytest` fast suite → 92 passed.
+`ruff check .` → clean. `mypy src tests` → 84 files, 0 issues. `npm run
+test` → 13 files, 69 passed (exact match). `npm run build` → 610 modules.
+`npm run lint` → 0/0, 37 files. All confirmed genuinely green.
+
+**Found a real bug in `feature_list.json` itself** (not in the product):
+a routine "list every id, check for duplicates" sanity check — done
+specifically because the prior session's `feature_list.json` edits
+weren't independently re-inspected structurally, only trusted by summary —
+turned up two duplicate ids: `FE001` and `FE003` each appeared twice. Both
+duplicates were byte-for-byte identical (the real Landing-page and
+Email-verification-page entries). Tracing it back: commit `8d6979a`
+("update components") had accidentally **overwritten** the existing `F001`
+(Node CRUD) and `F003` (Text embedding pipeline) entries' `id` fields to
+`"FE001"`/`"FE003"` instead of appending the new entries alongside them —
+destroying the original F001/F003 tracking entries entirely. The
+underlying features were never actually broken (`pytest
+tests/test_nodes.py` and the embedding tests were passing the whole time)
+— this was purely a harness-file bug, but a real one: F001 and F003 were
+untracked and would have stayed that way indefinitely if this session
+had just trusted the "all frontend tests passing" summary without
+checking the raw id list.
+
+Fixed: restored `F001`/`F003` verbatim from the last known-good commit
+(`6fc366f`, immediately before the corruption), independently re-verified
+their tests still pass (not just trusted the restored content), and
+removed the duplicate `FE001`/`FE003` entries. Full incident writeup in
+`Decisions.md` ("2026-08-19: Incident — F001/F003 ids overwritten...").
+
+- Completed: `feature_list.json` corruption fixed, F001/F003 restored, no
+  duplicate ids remain (verified: 35 unique entries, one per F*/FE* id).
+- In progress: —
+- Blocked: —
+- Next session should:
+  1. Whenever editing `feature_list.json`, end with an explicit
+     `[f["id"] for f in features]` duplicate/completeness check before
+     considering the edit done — this incident happened specifically
+     because that check wasn't part of the prior session's workflow.
+  2. `GraphCanvas` (FE008) is still the only untested frontend piece — its
+     entry got simplified to `not_started`/`verification: "TBD"` at some
+     point (from a more detailed `active` entry with a documented scoping
+     plan); worth deciding whether to restore that detail or leave the
+     simpler version now that this is the *only* remaining gap.
+  3. F013 (`/ws`) still isn't per-user scoped — flagged for several
+     sessions running now, still not fixed.
+  4. The torch/Neo4j-dependent backend tests remain unverified end to end
+     by any session so far.
+
 ## Session — 2026-08-21 (EdgeForm Fix, Full Component & Page Tests, Harness Updates & Vercel Verification)
 - Completed:
   - Fixed `frontend/src/components/EdgeForm.jsx` bug where initial `targetId` collided with `sourceId` on opening without pre-selection.
