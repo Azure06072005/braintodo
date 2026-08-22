@@ -1,5 +1,21 @@
 # Progress Log (Gemini sessions) — braintodo
 
+## Session — 2026-08-22 (F013 Realtime WebSocket Auth & Per-User Scoping)
+- **Completed**: Implemented per-user WebSocket scoping and token query param authentication for `/ws` (F013).
+  - Updated `src/braintodo/realtime/manager.py` with `ConnectionManager` mapping `WebSocket` -> `owner_id` and filtering `broadcast()` recipients by `owner_id`.
+  - Updated `src/braintodo/api/realtime.py` to authenticate `token` query param via `decode_access_token` and `UserRepository.get_by_id`, closing with code 1008 if unauthenticated.
+  - Threaded `owner_id` / `str(current_user.id)` to all `manager.broadcast()` call sites in `nodes.py`, `edges.py`, and `graph.py`.
+  - Rewrote `tests/test_realtime_manager.py` (5 tests) and `tests/test_realtime_api.py` (8 tests) with cross-user isolation and unauthenticated rejection coverage.
+  - Updated `tests/test_graph_export_import.py` to pass authenticated WebSocket URL.
+  - Updated `Harness/feature_list.json` and `Harness/Decisions.md`.
+- **Verification Evidence**:
+  - Backend Realtime tests: `pytest tests/test_realtime_api.py tests/test_realtime_manager.py tests/test_graph_export_import.py` -> 14 passed.
+  - Fast test suite: `pytest -q ...` -> 98 passed (up from 92).
+  - Full test suite: `pytest` -> 113 passed, 1 skipped.
+  - Linters: `ruff check .` clean, `mypy src tests` 0 errors across 84 files.
+  - Frontend: `npm run test` 13 files, 69 passed. `npm run build` & `npm run lint` clean.
+- **Status**: F013 per-user scoping complete and verified.
+
 ## Session — 2026-08-19 (Incident: F001/F003 Corruption in feature_list.json, Restored)
 - **Completed**: Restored F001 (Node CRUD) and F003 (Text embedding pipeline) in `Harness/feature_list.json` after accidental ID overwrite in prior commit. Removed duplicate FE001/FE003 entries.
 - **Verification Evidence**:

@@ -100,10 +100,10 @@
     {
       "id": "F013",
       "name": "Realtime graph event broadcast (WebSocket)",
-      "behavior": "GET /ws upgrades to a WebSocket; every connected client receives node_created/node_updated/node_deleted/edge_created/edge_updated/edge_deleted/graph_imported events as they happen, broadcast to ALL connections (not yet scoped per-user - see F020 Decisions.md note)",
-      "verification": "pytest tests/test_realtime_api.py tests/test_graph_export_import.py -x",
+      "behavior": "GET /ws?token=... upgrades to a WebSocket; clients receive node_created/node_updated/node_deleted/edge_created/edge_updated/edge_deleted/graph_imported events scoped to their own owner_id",
+      "verification": "pytest tests/test_realtime_api.py tests/test_realtime_manager.py tests/test_graph_export_import.py -x",
       "state": "passing",
-      "evidence": "Re-verified 2026-08-19 on a fresh clone of main (7b267b9), part of the fast-suite run (92 passed). NOTE: intentionally NOT owner_id-scoped - flagged in Decisions.md '2026-08-17: F020 - /ws explicitly left unscoped'."
+      "evidence": "pytest tests/test_realtime_api.py tests/test_realtime_manager.py tests/test_graph_export_import.py passed 14/14 tests; cross-user event isolation verified; fast test suite 98 passed"
     },
     {
       "id": "F014",

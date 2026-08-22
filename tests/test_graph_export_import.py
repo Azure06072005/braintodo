@@ -43,12 +43,16 @@ def test_import_broadcasts_a_single_graph_imported_event() -> None:
     token = body.split("token=")[1].split("\n")[0]
     sync_client.get("/auth/verify", params={"token": token})
     resp = sync_client.post("/auth/login", json={"email": email, "password": password})
-    auth_header = {"Authorization": f"Bearer {resp.json()['access_token']}"}
+    access_token = resp.json()["access_token"]
+    auth_header = {"Authorization": f"Bearer {access_token}"}
+    # F013: WebSocket handshakes can't carry an Authorization header from
+    # browser JS, so the access token goes on the connection URL instead.
+    ws_url = f"/ws?token={access_token}"
 
     payload = {"nodes": [{"id": "old-1", "owner_id": "old-owner", "title": "A"}], "edges": []}
 
     try:
-        with sync_client.websocket_connect("/ws") as ws:
+        with sync_client.websocket_connect(ws_url) as ws:
             resp = sync_client.post("/graph/import", json=payload, headers=auth_header)
             assert resp.status_code == 200
             message = ws.receive_json()

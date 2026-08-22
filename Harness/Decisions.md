@@ -6,6 +6,12 @@ log entry was written (reconstructed from prior session summaries); the
 underlying decisions were made in earlier sessions whose exact dates weren't
 recorded — fix the dates if you have the real commit history.
 
+## 2026-08-22: F013 — /ws authenticated via token query param and scoped per-owner
+- Reason: WebSocket handshakes initiated by browser JavaScript cannot include custom HTTP headers (such as `Authorization: Bearer <token>`). Passing the standard JWT access token via `ws://host/ws?token=<access_token>` query parameter allows authenticating the user during handshake without requiring extra handshake protocols.
+- Scoping: `ConnectionManager` tags each active WebSocket with the authenticated `owner_id`. `broadcast()` filters recipient sockets to matching `owner_id`, closing the data-isolation gap where one user's graph edits were previously broadcast to all connected clients.
+- Tradeoff: Query parameters can be logged by reverse proxies / access logs. Accepted as the standard tradeoff for browser WebSocket authentication without introducing cookie/session infrastructure.
+- Constraint: Unauthenticated or expired token connections are closed immediately with WebSocket close code 1008 (policy violation) before `accept()`.
+
 ## 2026-08-19: Incident — F001/F003 ids overwritten by FE001/FE003 in feature_list.json, restored
 - What happened: commit `8d6979a` ("update components") added the real
   `FE001` (Landing page) and `FE003` (Email verification page) entries, but
