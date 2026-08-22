@@ -26,7 +26,7 @@ async def create_edge(
         edge = await repo.create(data, str(current_user.id))
     except NodeNotFoundError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
-    await manager.broadcast("edge_created", edge.model_dump())
+    await manager.broadcast("edge_created", edge.model_dump(), str(current_user.id))
     return edge
 
 
@@ -64,7 +64,7 @@ async def update_edge(
         edge = await repo.update(edge_id, data, str(current_user.id))
     except EdgeNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
-    await manager.broadcast("edge_updated", edge.model_dump())
+    await manager.broadcast("edge_updated", edge.model_dump(), str(current_user.id))
     return edge
 
 
@@ -79,4 +79,4 @@ async def delete_edge(
         await repo.delete(edge_id, str(current_user.id))
     except EdgeNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
-    await manager.broadcast("edge_deleted", {"id": edge_id})
+    await manager.broadcast("edge_deleted", {"id": edge_id}, str(current_user.id))

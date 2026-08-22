@@ -3,6 +3,21 @@
 Update this at the end of every session (Principle 5 & 12). This is what the
 next session reads to avoid starting from zero.
 
+## Session — 2026-08-22 (F013 Realtime WebSocket Auth & Per-User Scoping)
+- Completed:
+  - Scoped `/ws` broadcasts per owner in `ConnectionManager` (`src/braintodo/realtime/manager.py`).
+  - Authenticated `/ws` via `token` query param in `src/braintodo/api/realtime.py` (rejects with close code 1008 if unauthenticated).
+  - Threaded `owner_id` to all `manager.broadcast()` calls in `nodes.py`, `edges.py`, and `graph.py`.
+  - Rewrote `tests/test_realtime_manager.py` (5 tests) and `tests/test_realtime_api.py` (8 tests) with cross-user isolation and rejection tests.
+  - Updated `tests/test_graph_export_import.py` to authenticate WebSocket handshake.
+  - Updated `Harness/feature_list.json` and `Harness/Decisions.md`.
+- Verification evidence:
+  - Backend: `pytest tests/test_realtime_api.py tests/test_realtime_manager.py tests/test_graph_export_import.py` (14 passed), fast suite 98 passed, full suite 113 passed. `ruff check .` clean, `mypy src tests` 0 errors.
+  - Frontend: `npm run test` (13 files, 69 passed), `npm run build` (610 modules), `npm run lint` (0/0).
+- Next session should:
+  1. Add tests for `GraphCanvas.jsx` (FE008).
+  2. Perform end-to-end testing with Docker Compose services.
+
 ## Session — 2026-08-19 (incident: F001/F003 corruption in feature_list.json, restored)
 
 Started from a fresh clone of `main` (`b00fb30`, PR #31 merged), which

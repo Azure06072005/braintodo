@@ -78,5 +78,5 @@ async def import_graph(
         edges_skipped=edges_skipped,
     )
 
-    await manager.broadcast("graph_imported", result.model_dump())
+    await manager.broadcast("graph_imported", result.model_dump(), owner_id)
     return result
