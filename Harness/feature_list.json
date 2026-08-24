@@ -273,6 +273,14 @@
       "state": "passing",
       "evidence": "NodeDetailPanel.test.jsx (6 tests, all passing) covers null-node placeholder, full detail rendering (title, content, tags, embeddings, cluster), empty fallbacks, bidirectional link suggestions, topology metrics, and onEdit/onDelete/onClosePanel callbacks. npm run test -> 13 files, 69 tests passing; clean build & 0 lint errors."
     },
+        {
+      "id": "F021",
+      "name": "Configurable embedding provider + offline/no-network fallback",
+      "behavior": "get_embedder() (src/braintodo/api/nodes.py) reads settings.embedding_provider ('sentence_transformer' default | 'fake'). SentenceTransformerProvider wraps model-load OSError in a clear, actionable RuntimeError instead of a raw huggingface.co connection stack trace. Fixes a real gap: production always hardcoded the real SentenceTransformerProvider with no fallback, but every existing test overrode get_embedder with FakeEmbeddingProvider, so this path had never been exercised by any test in any session - a network-restricted deploy would 500 on every POST /nodes despite a fully green suite.",
+      "verification": "pytest tests/test_embedding_provider_config.py -x",
+      "state": "passing",
+      "evidence": "Discovered 2026-08-24: after installing torch/torch-geometric/sentence-transformers for the first time in any session and running the FULL suite (not the fast/excluded suite), confirmed get_sentence_transformer_provider() raises a raw OSError connecting to huggingface.co in this network-restricted sandbox - i.e. F001 (Node CRUD) would 500 on every create in an offline deploy despite being marked passing. Fixed via EMBEDDING_PROVIDER setting + FakeEmbeddingProvider fallback + clear RuntimeError. Verified both directions: (1) default 'sentence_transformer' with no network reachable raises RuntimeError with actionable message (was raw OSError before fix); (2) EMBEDDING_PROVIDER=fake exercised through the REAL api.nodes.get_embedder -> NodeRepository dependency-injection path (not a test override) successfully returns 201 on POST /nodes with a real embedding vector. pytest tests/test_embedding_provider_config.py -> 5/5 passed. Full suite re-run after fix: 118 passed, 1 skipped (test_neo4j_store.py self-skips, no live Neo4j in this sandbox), ruff check . clean. mypy src: 1 pre-existing error unrelated to this change (SentenceTransformerProvider.dimension: int | None vs int, confirmed present before this fix via git stash - not introduced by this work, not fixed by this work, flagged separately)."
+    },
     {
       "id": "FE008",
       "name": "GraphCanvas",
@@ -281,5 +289,6 @@
       "state": "passing",
       "evidence": "GraphCanvas.test.jsx (9 tests, all passing) covers node circle/rect shape dispatch, edge lines, dangling edge filtering, title text labels, onNodeClick dispatch, cluster hull path rendering, dynamic list rerendering, and clean unmount; npm run test -> 14 files, 80 tests passing; clean build & 0 lint errors."
     }
+    
   ]
 }

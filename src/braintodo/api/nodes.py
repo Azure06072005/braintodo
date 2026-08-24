@@ -3,8 +3,10 @@ from functools import lru_cache
 from fastapi import APIRouter, Depends, HTTPException
 
 from braintodo.api.auth import get_current_user
+from braintodo.config import settings
 from braintodo.db.models import User
 from braintodo.embedding.base import EmbeddingProvider
+from braintodo.embedding.fake_provider import FakeEmbeddingProvider
 from braintodo.embedding.sentence_transformer_provider import (
     get_sentence_transformer_provider,
 )
@@ -25,17 +27,25 @@ def _default_store() -> Neo4jGraphStore:
 def get_store() -> GraphStore:
     return _default_store()
 
+@lru_cache
+def _default_fake_embedder() -> FakeEmbeddingProvider: 
+    return FakeEmbeddingProvider()
 
 def get_embedder() -> EmbeddingProvider:
-    return get_sentence_transformer_provider()
-
+    if settings.embedding_provider == "fake": 
+        return _default_fake_embedder()
+    if settings.embedding_provider != "sentence_transformer": 
+        raise RuntimeError(
+            f"Unknown EMBEDDING_PROVIDER '{settings.embedding_provider}'. "
+            "Expected 'sentence_transformer' or 'fake'."
+        )
+    return get_sentence_transformer_provider(settings.sentence_transformer_model)
 
 def get_node_repository(
     store: GraphStore = Depends(get_store),
     embedder: EmbeddingProvider = Depends(get_embedder),
 ) -> NodeRepository:
     return NodeRepository(store, embedder)
-
 
 async def close_default_store() -> None:
     if _default_store.cache_info().currsize:

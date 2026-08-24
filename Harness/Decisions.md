@@ -6,6 +6,34 @@ log entry was written (reconstructed from prior session summaries); the
 underlying decisions were made in earlier sessions whose exact dates weren't
 recorded — fix the dates if you have the real commit history.
 
+## 2026-08-24: EMBEDDING_PROVIDER config + fake fallback for offline/restricted deploys
+- Reason: `get_embedder()` in `src/braintodo/api/nodes.py` always hardcoded
+  the real `SentenceTransformerProvider`, which downloads model weights from
+  huggingface.co on first use. Every test in the suite overrides
+  `get_embedder` with `FakeEmbeddingProvider`, so this was never actually
+  exercised — a network-restricted or offline deploy would 500 on every
+  `POST /nodes` despite F001 being marked `passing` and the full suite being
+  green. Discovered this session while running the genuinely full suite with
+  torch/torch-geometric/sentence-transformers installed for the first time.
+- Fix: `embedding_provider` setting (`"sentence_transformer"` default |
+  `"fake"`) on `Settings`; `get_embedder()` branches on it; unknown values
+  raise `RuntimeError` rather than silently defaulting. Model-load `OSError`
+  in `SentenceTransformerProvider` is now wrapped in an actionable
+  `RuntimeError` pointing at `EMBEDDING_PROVIDER=fake` as the escape hatch,
+  instead of surfacing a raw connection stack trace.
+- Rejected: silently catching the `OSError` and falling back to the fake
+  provider automatically — this would silently degrade embedding quality in
+  production without anyone noticing (a misconfigured deploy would just get
+  worse embeddings, not an error). Explicit opt-in via
+  `EMBEDDING_PROVIDER=fake` was chosen so the fallback is a deliberate,
+  visible choice, not a silent one.
+- Constraint: any new `EmbeddingProvider` implementation should be wired
+  through this same `settings.embedding_provider` switch rather than adding
+  another hardcoded default in `api/nodes.py`. Tests should exercise
+  `get_embedder()` directly (see `tests/test_embedding_provider_config.py`)
+  rather than only relying on `dependency_overrides`, so real
+  production-path bugs like this one don't stay invisible again.
+
 ## 2026-08-22: Live-mode Auth Token Threading in useGraphData & AppPage
 - Reason: REST API routes (F020) and `/ws` realtime broadcasts (F013) enforce authentication. Threading `token` from `useAuth()` in `AppPage.jsx` into `useGraphData(source, undefined, token)` and `createApiClient(baseUrl, token)` ensures REST calls attach `Authorization: Bearer <token>` and WebSocket connects with `/ws?token=<token>`.
 - Constraint: Live-mode API hooks must accept and pass auth tokens from auth state.

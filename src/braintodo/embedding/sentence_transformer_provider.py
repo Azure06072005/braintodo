@@ -19,7 +19,19 @@ class SentenceTransformerProvider:
         # dependency is only loaded if this provider is actually used.
         from sentence_transformers import SentenceTransformer
 
-        self._model = SentenceTransformer(model_name)
+        try:
+            self._model = SentenceTransformer(model_name)
+        except OSError as exc:
+            raise RuntimeError(
+                f"Could not load sentence-transformers model '{model_name}'. "
+                "This provider needs outbound network access to huggingface.co "
+                "on first use, or a pre-populated local HF cache (set HF_HOME "
+                "and pre-download the model in offline/sandboxed environments). "
+                "If this environment can't reach huggingface.co (e.g. local "
+                "dev, CI, or a network-restricted sandbox), set "
+                "EMBEDDING_PROVIDER=fake to use the dependency-free fake "
+                "provider instead."
+            ) from exc
         self.dimension = self._model.get_sentence_embedding_dimension()
 
     def embed(self, text: str) -> list[float]:
@@ -28,6 +40,9 @@ class SentenceTransformerProvider:
 
 
 @lru_cache
-def get_sentence_transformer_provider() -> SentenceTransformerProvider:
-    """Singleton so the model is loaded into memory only once per process."""
-    return SentenceTransformerProvider()
+def get_sentence_transformer_provider(
+    model_name: str = _DEFAULT_MODEL,
+) -> SentenceTransformerProvider:
+    """Singleton (per model_name) so the model is loaded into memory only once
+    per process."""
+    return SentenceTransformerProvider(model_name)
