@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { theme } from "../theme";
+import { useTranslation } from "../i18n/useTranslation";
 
 export default function SearchBar({ onSearch, onClear, onSelectMatch, result, searching }) {
   const [q, setQ] = useState("");
+  const { t } = useTranslation();
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -21,15 +23,15 @@ export default function SearchBar({ onSearch, onClear, onSelectMatch, result, se
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Tìm ý tưởng… (từ khoá hoặc ngữ nghĩa)"
+          placeholder={t("search.placeholder")}
           style={styles.input}
         />
         <button type="submit" style={styles.searchBtn}>
-          {searching ? "…" : "Tìm"}
+          {searching ? t("search.searching") : t("search.submit")}
         </button>
         {result && (
           <button type="button" onClick={handleClear} style={styles.clearBtn}>
-            Xoá
+            {t("search.clear")}
           </button>
         )}
       </form>
@@ -38,12 +40,15 @@ export default function SearchBar({ onSearch, onClear, onSelectMatch, result, se
         <div className="bt-search-dropdown" style={styles.dropdown}>
           {result.matches.length === 0 ? (
             <p style={{ fontSize: 12.5, color: theme.textMuted, margin: "8px 12px" }}>
-              Không tìm thấy ý tưởng nào khớp.
+              {t("search.no_results")}
             </p>
           ) : (
             <>
               <p style={styles.dropdownHeader}>
-                {result.matches.length} kết quả · vùng lân cận: {result.subgraph_nodes.length} node
+                {t("search.results_summary", {
+                  count: result.matches.length,
+                  nodeCount: result.subgraph_nodes.length,
+                })}
               </p>
               {result.matches.map((m) => {
                 const node = result.subgraph_nodes.find((n) => n.id === m.node_id);

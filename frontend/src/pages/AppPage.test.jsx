@@ -172,7 +172,7 @@ describe("AppPage", () => {
     global.fetch = originalFetch;
   });
 
-    it("toggling topology does not enter an infinite update loop and surfaces metrics", async () => {
+  it("toggling topology does not enter an infinite update loop and surfaces metrics", async () => {
     const user = userEvent.setup();
     render(<AppPage />);
     await waitFor(() => screen.getByTestId("node-count"));

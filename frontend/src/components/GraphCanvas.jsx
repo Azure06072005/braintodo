@@ -119,12 +119,16 @@ export default function GraphCanvas({
             d.fx = null;
             d.fy = null;
           })
-      );
+      )
+      .on("click", (event, d) => onNodeClick(d.id));
 
     nodeSel
       .append(function (d) {
         const tag = d.shape === "square" ? "rect" : "circle";
-        return document.createElementNS("http://www.w3.org/2000/svg", tag);
+        const el = document.createElementNS("http://www.w3.org/2000/svg", tag);
+        el.onclick = () => onNodeClick?.(d.id);
+        el.addEventListener("click", () => onNodeClick?.(d.id));
+        return el;
       })
       .each(function (d) {
         const el = d3.select(this);
@@ -152,8 +156,7 @@ export default function GraphCanvas({
           ? 2.5
           : 2
       )
-      .attr("opacity", (d) => (highlightNodeIds && !highlightNodeIds.has(d.id) ? 0.25 : 1))
-      .on("click", (event, d) => onNodeClick(d.id));
+      .attr("opacity", (d) => (highlightNodeIds && !highlightNodeIds.has(d.id) ? 0.25 : 1));
 
     if (topology) {
       nodeSel.append("title").text((d) => {

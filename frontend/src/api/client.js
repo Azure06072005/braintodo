@@ -16,12 +16,13 @@ export function createApiClient(baseUrl, token) {
     return resp.json();
   }
 
-  async function sendJson(method, path, body) {
+  async function sendJson(method, path, body, { token: overrideToken } = {}) {
+    const effectiveToken = overrideToken ?? token;
     const resp = await fetch(`${baseUrl}${path}`, {
       method,
       headers: {
         "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(effectiveToken ? { Authorization: `Bearer ${effectiveToken}` } : {}),
       },
       body: JSON.stringify(body),
     });
@@ -93,8 +94,8 @@ export function createApiClient(baseUrl, token) {
     async verifyEmail(token) {
       return getJson(`/auth/verify?token=${encodeURIComponent(token)}`); // -> UserOut
     },
-    async me(token) {
-      return getJson("/auth/me", { token }); // -> UserOut
+    async me(tokenOverride) {
+      return getJson("/auth/me", { token: tokenOverride }); // -> UserOut
     },
 
     // --- Export/Import (khớp đúng api/graph.py: F019) ---
@@ -105,9 +106,10 @@ export function createApiClient(baseUrl, token) {
       return sendJson("POST", "/graph/import", data); // -> GraphImportResult
     },
 
-    connectRealtime(onEvent, { onStatusChange } = {}) {
-      const wsBase = baseUrl.replace(/^http/, "ws") + "/ws";
-      const wsUrl = token ? `${wsBase}?token=${encodeURIComponent(token)}` : wsBase;
+    connectRealtime(onEvent, { onStatusChange, token: overrideToken } = {}) {
+      const effectiveToken = overrideToken ?? token;
+      const wsBaseUrl = baseUrl.replace(/^http/, "ws");
+      const wsUrl = `${wsBaseUrl}/ws${effectiveToken ? `?token=${encodeURIComponent(effectiveToken)}` : ""}`;
       const socket = new WebSocket(wsUrl);
 
       socket.onopen = () => onStatusChange?.("open");

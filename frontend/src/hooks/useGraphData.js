@@ -10,7 +10,7 @@ import { mockSearch } from "../search/mockSearch";
 import { computeMockTopology } from "../analytics/mockTopology";
 import { computeMockClusters } from "../clustering/mockClustering";
 
-const DEFAULT_API_BASE_URL = import.meta.env.VITE_API_BASE_URL  || "http://localhost:8000";
+const DEFAULT_API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 /** Chèn/cập nhật 1 item theo id vào mảng, không có thì thêm mới. */
 function upsertById(list, item) {
@@ -52,8 +52,6 @@ export function useGraphData(source, apiBaseUrl = DEFAULT_API_BASE_URL, token = 
   const client = useMemo(() => createApiClient(apiBaseUrl, token), [apiBaseUrl, token]);
 
   const refetchAll = useCallback(async () => {
-  
-  async function refetchAllImpl() {
     const [liveNodes, liveEdges, liveClusters, liveSuggestions] = await Promise.all([
       client.listNodes(),
       client.listEdges(),
