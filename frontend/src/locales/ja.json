@@ -1,0 +1,32 @@
+{
+  "common": {
+    "app_name": "braintodo",
+    "loading": "読み込み中…"
+  },
+  "topbar": {
+    "new_node": "+ 新しいアイデア",
+    "new_edge": "+ リンク",
+    "topology_toggle": "重要度",
+    "topology_computing": "計算中…",
+    "cluster_toggle": "アイデアのクラスタ",
+    "detail_toggle": "詳細",
+    "source_mock": "モック",
+    "source_live": "本番API",
+    "status_live": "● ライブ",
+    "status_disconnected": "○ 切断",
+    "status_error": "● 接続エラー",
+    "api_error": "本番APIに接続できません ({{error}}) — サンプルデータを使用中",
+    "language_label": "言語"
+  },
+  "topology": {
+    "compute_failed": "トポロジーを計算できませんでした: {{error}}"
+  },
+  "search": {
+    "placeholder": "アイデアを検索…(キーワードまたは意味検索)",
+    "submit": "検索",
+    "searching": "…",
+    "clear": "クリア",
+    "no_results": "一致するアイデアが見つかりません。",
+    "results_summary": "{{count}} 件の結果 · 近傍: {{nodeCount}} ノード"
+  }
+}

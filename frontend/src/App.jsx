@@ -4,17 +4,20 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import AppPage from "./pages/AppPage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
+import { I18nProvider } from "./i18n/I18nContext";
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/app" element={<AppPage />} />
-        <Route path="/verify-email" element={<VerifyEmailPage />} />
-      </Routes>
-    </BrowserRouter>
+    <I18nProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/app" element={<AppPage />} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
+        </Routes>
+      </BrowserRouter>
+    </I18nProvider>
   );
 }

@@ -8,6 +8,7 @@ import {
 } from "../data/mockData";
 import { mockSearch } from "../search/mockSearch";
 import { computeMockTopology } from "../analytics/mockTopology";
+import { computeMockClusters } from "../clustering/mockClustering";
 
 const DEFAULT_API_BASE_URL = import.meta.env.VITE_API_BASE_URL  || "http://localhost:8000";
 
@@ -30,8 +31,16 @@ function removeById(list, id) {
  * fallback về mock + báo lỗi ra `error`, không crash UI. Khi "live", cũng
  * mở kết nối WebSocket /ws để tự cập nhật graph theo thời gian thực —
  * không cần refetch toàn bộ mỗi khi có thay đổi.
+ *
+ * IMPORTANT: every function on the returned object is wrapped in
+ * useCallback, and the object itself in useMemo. Consumers (e.g. AppPage's
+ * topology useEffect) put these functions in dependency arrays; before this
+ * fix, a fresh object literal (and fresh function references) were returned
+ * on every render, which retriggered any effect depending on them
+ * immediately after it ran, producing an infinite render loop and a React
+ * "Maximum update depth exceeded" crash. See Decisions.md.
  */
-export function useGraphData(source, apiBaseUrl = DEFAULT_API_BASE_URL) {
+export function useGraphData(source, apiBaseUrl = DEFAULT_API_BASE_URL, token = null) {
   const [nodes, setNodes] = useState(mockNodes);
   const [edges, setEdges] = useState(mockEdges);
   const [clusters, setClusters] = useState(mockClusters);
@@ -40,9 +49,9 @@ export function useGraphData(source, apiBaseUrl = DEFAULT_API_BASE_URL) {
   const [error, setError] = useState(null);
   const [realtimeStatus, setRealtimeStatus] = useState("disconnected");
 
-  const client = useMemo(() => createApiClient(apiBaseUrl), [apiBaseUrl]);
+  const client = useMemo(() => createApiClient(apiBaseUrl, token), [apiBaseUrl, token]);
 
-  async function refetchAllImpl() {
+  const refetchAll = useCallback(async () => {
     const [liveNodes, liveEdges, liveClusters, liveSuggestions] = await Promise.all([
       client.listNodes(),
       client.listEdges(),
@@ -53,8 +62,7 @@ export function useGraphData(source, apiBaseUrl = DEFAULT_API_BASE_URL) {
     setEdges(liveEdges);
     setClusters(liveClusters);
     setLinkSuggestions(liveSuggestions);
-  }
-  const refetchAll = useCallback(refetchAllImpl, [client]);
+  }, [client]);
 
   // Tải dữ liệu ban đầu (mock hoặc snapshot từ API thật).
   useEffect(() => {
@@ -137,32 +145,27 @@ export function useGraphData(source, apiBaseUrl = DEFAULT_API_BASE_URL) {
     };
   }, [source, client, refetchAll]);
 
-  return {
-    nodes,
-    edges,
-    clusters,
-    linkSuggestions,
-    loading,
-    error,
-    realtimeStatus, // "disconnected" | "open" | "closed" | "error"
-
-    // --- Mutations ---
-    // Ở chế độ mock: sửa state cục bộ trực tiếp, không gọi mạng.
-    // Ở chế độ live: gọi API thật; state cũng được cập nhật ngay từ response
-    // (không đợi WebSocket dội lại) để UI phản hồi tức thì — event WS đến
-    // sau chỉ là upsert trùng, vô hại vì upsertById là idempotent.
-    async createNode(data) {
+  // --- Mutations ---
+  const createNode = useCallback(
+    async (data) => {
       if (source === "mock") {
         const node = { id: crypto.randomUUID(), embedding: null, graph_embedding: null, ...data };
-        setNodes((prev) => [...prev, node]);
+        const newNodes = [...nodes, node];
+        setNodes(newNodes);
+        // Structural change (new node) - recompute clusters so a freshly
+        // added node isn't invisible to hull rendering. See mockClustering.js.
+        setClusters(computeMockClusters(newNodes, edges));
         return node;
       }
       const node = await client.createNode(data);
       setNodes((prev) => upsertById(prev, node));
       return node;
     },
+    [source, nodes, edges, client]
+  );
 
-    async updateNode(nodeId, data) {
+  const updateNode = useCallback(
+    async (nodeId, data) => {
       if (source === "mock") {
         let updated = null;
         setNodes((prev) =>
@@ -172,24 +175,35 @@ export function useGraphData(source, apiBaseUrl = DEFAULT_API_BASE_URL) {
             return updated;
           })
         );
+        // Editing a node's fields doesn't change graph topology (ids/edges
+        // are unchanged), so clusters don't need recomputing here.
         return updated;
       }
       const node = await client.updateNode(nodeId, data);
       setNodes((prev) => upsertById(prev, node));
       return node;
     },
+    [source, client]
+  );
 
-    async deleteNode(nodeId) {
+  const deleteNode = useCallback(
+    async (nodeId) => {
       if (source === "mock") {
-        setNodes((prev) => removeById(prev, nodeId));
-        setEdges((prev) => prev.filter((e) => e.source_id !== nodeId && e.target_id !== nodeId));
+        const newNodes = removeById(nodes, nodeId);
+        const newEdges = edges.filter((e) => e.source_id !== nodeId && e.target_id !== nodeId);
+        setNodes(newNodes);
+        setEdges(newEdges);
+        setClusters(computeMockClusters(newNodes, newEdges));
         return;
       }
       await client.deleteNode(nodeId);
       setNodes((prev) => removeById(prev, nodeId));
     },
+    [source, nodes, edges, client]
+  );
 
-    async createEdge(data) {
+  const createEdge = useCallback(
+    async (data) => {
       if (source === "mock") {
         const sourceExists = nodes.some((n) => n.id === data.source_id);
         const targetExists = nodes.some((n) => n.id === data.target_id);
@@ -197,15 +211,21 @@ export function useGraphData(source, apiBaseUrl = DEFAULT_API_BASE_URL) {
           throw new Error("source_id hoặc target_id không tồn tại");
         }
         const edge = { id: crypto.randomUUID(), ...data };
-        setEdges((prev) => [...prev, edge]);
+        const newEdges = [...edges, edge];
+        setEdges(newEdges);
+        // Structural change (new edge can merge two clusters) - recompute.
+        setClusters(computeMockClusters(nodes, newEdges));
         return edge;
       }
       const edge = await client.createEdge(data);
       setEdges((prev) => upsertById(prev, edge));
       return edge;
     },
+    [source, nodes, edges, client]
+  );
 
-    async updateEdge(edgeId, data) {
+  const updateEdge = useCallback(
+    async (edgeId, data) => {
       if (source === "mock") {
         let updated = null;
         setEdges((prev) =>
@@ -215,45 +235,59 @@ export function useGraphData(source, apiBaseUrl = DEFAULT_API_BASE_URL) {
             return updated;
           })
         );
+        // Relation type/style edits don't change which nodes are connected
+        // (source_id/target_id untouched by the edit form), so no recompute.
         return updated;
       }
       const edge = await client.updateEdge(edgeId, data);
       setEdges((prev) => upsertById(prev, edge));
       return edge;
     },
+    [source, client]
+  );
 
-    async deleteEdge(edgeId) {
+  const deleteEdge = useCallback(
+    async (edgeId) => {
       if (source === "mock") {
-        setEdges((prev) => removeById(prev, edgeId));
+        const newEdges = removeById(edges, edgeId);
+        setEdges(newEdges);
+        // Structural change (removing an edge can split a cluster in two).
+        setClusters(computeMockClusters(nodes, newEdges));
         return;
       }
       await client.deleteEdge(edgeId);
       setEdges((prev) => removeById(prev, edgeId));
     },
+    [source, nodes, edges, client]
+  );
 
-    // Trả về đúng shape SearchResult thật: { matches, subgraph_nodes, subgraph_edges }
-    async search(q, options) {
-      if (source == "mock") {
+  // Trả về đúng shape SearchResult thật: { matches, subgraph_nodes, subgraph_edges }
+  const search = useCallback(
+    async (q, options) => {
+      if (source === "mock") {
         return mockSearch(nodes, edges, q, options);
       }
       return client.search(q, options);
     },
+    [source, nodes, edges, client]
+  );
 
-    async getTopology() {
-      if (source === "mock") {
-        return computeMockTopology(nodes, edges);
-      }
-      return client.getTopology();
-    },
+  const getTopology = useCallback(async () => {
+    if (source === "mock") {
+      return computeMockTopology(nodes, edges);
+    }
+    return client.getTopology();
+  }, [source, nodes, edges, client]);
 
-    async exportGraph() {
-      if (source === "mock") {
-        return { nodes, edges };
-      }
-      return client.exportGraph();
-    },
+  const exportGraph = useCallback(async () => {
+    if (source === "mock") {
+      return { nodes, edges };
+    }
+    return client.exportGraph();
+  }, [source, nodes, edges, client]);
 
-    async importGraph(data) {
+  const importGraph = useCallback(
+    async (data) => {
       if (source === "mock") {
         // Cùng logic remap id như backend thật (graph/api.py import_graph):
         // id trong file luôn được thay bằng id mới, edge dangling thì bỏ qua.
@@ -263,7 +297,7 @@ export function useGraphData(source, apiBaseUrl = DEFAULT_API_BASE_URL) {
           idMap.set(n.id, newId);
           return { ...n, id: newId, embedding: null, graph_embedding: null };
         });
-        const newEdges = [];
+        const importedEdges = [];
         let edgesSkipped = 0;
         for (const e of data.edges) {
           const sourceId = idMap.get(e.source_id);
@@ -272,22 +306,69 @@ export function useGraphData(source, apiBaseUrl = DEFAULT_API_BASE_URL) {
             edgesSkipped += 1;
             continue;
           }
-          newEdges.push({ ...e, id: crypto.randomUUID(), source_id: sourceId, target_id: targetId });
+          importedEdges.push({ ...e, id: crypto.randomUUID(), source_id: sourceId, target_id: targetId });
         }
-        setNodes((prev) => [...prev, ...newNodes]);
-        setEdges((prev) => [...prev, ...newEdges]);
+        const combinedNodes = [...nodes, ...newNodes];
+        const combinedEdges = [...edges, ...importedEdges];
+        setNodes(combinedNodes);
+        setEdges(combinedEdges);
+        // Fix: previously `clusters` was never touched here, so imported
+        // graphs (e.g. a real project's node/edge export) rendered with no
+        // cluster hulls at all - hullPathFor() in GraphCanvas.jsx looks up
+        // cluster.node_ids against the imported nodes' new ids, which never
+        // matched the stale hardcoded mockClusters ids ("p", "c1", ...).
+        setClusters(computeMockClusters(combinedNodes, combinedEdges));
         return {
           nodes_created: newNodes.length,
-          edges_created: newEdges.length,
+          edges_created: importedEdges.length,
           edges_skipped: edgesSkipped,
         };
       }
       const result = await client.importGraph(data);
-      // Server đã tạo xong toàn bộ node/edge với id mới — refetch để lấy
-      // đúng state (không tự patch vì response chỉ có số lượng, không có
-      // node/edge cụ thể).
       await refetchAll();
       return result;
     },
-  };
+    [source, nodes, edges, client, refetchAll]
+  );
+
+  return useMemo(
+    () => ({
+      nodes,
+      edges,
+      clusters,
+      linkSuggestions,
+      loading,
+      error,
+      realtimeStatus,
+      createNode,
+      updateNode,
+      deleteNode,
+      createEdge,
+      updateEdge,
+      deleteEdge,
+      search,
+      getTopology,
+      exportGraph,
+      importGraph,
+    }),
+    [
+      nodes,
+      edges,
+      clusters,
+      linkSuggestions,
+      loading,
+      error,
+      realtimeStatus,
+      createNode,
+      updateNode,
+      deleteNode,
+      createEdge,
+      updateEdge,
+      deleteEdge,
+      search,
+      getTopology,
+      exportGraph,
+      importGraph,
+    ]
+  );
 }

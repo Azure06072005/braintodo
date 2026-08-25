@@ -1,0 +1,32 @@
+{
+  "common": {
+    "app_name": "braintodo",
+    "loading": "Loading…"
+  },
+  "topbar": {
+    "new_node": "+ New idea",
+    "new_edge": "+ Link",
+    "topology_toggle": "Importance",
+    "topology_computing": "Computing…",
+    "cluster_toggle": "Idea clusters",
+    "detail_toggle": "Details",
+    "source_mock": "Mock",
+    "source_live": "Live API",
+    "status_live": "● Live",
+    "status_disconnected": "○ Disconnected",
+    "status_error": "● Connection error",
+    "api_error": "Could not reach the live API ({{error}}) — using sample data",
+    "language_label": "Language"
+  },
+  "topology": {
+    "compute_failed": "Could not compute topology: {{error}}"
+  },
+  "search": {
+    "placeholder": "Search ideas… (keyword or semantic)",
+    "submit": "Search",
+    "searching": "…",
+    "clear": "Clear",
+    "no_results": "No matching ideas found.",
+    "results_summary": "{{count}} results · neighborhood: {{nodeCount}} nodes"
+  }
+}
