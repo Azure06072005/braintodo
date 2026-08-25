@@ -1,0 +1,32 @@
+{
+  "common": {
+    "app_name": "braintodo",
+    "loading": "Đang tải…"
+  },
+  "topbar": {
+    "new_node": "+ Ý tưởng mới",
+    "new_edge": "+ Liên kết",
+    "topology_toggle": "Độ quan trọng",
+    "topology_computing": "Đang tính…",
+    "cluster_toggle": "Cụm ý tưởng",
+    "detail_toggle": "Chi tiết",
+    "source_mock": "Mock",
+    "source_live": "API thật",
+    "status_live": "● Live",
+    "status_disconnected": "○ Mất kết nối",
+    "status_error": "● Lỗi kết nối",
+    "api_error": "Không nối được API thật ({{error}}) — đang dùng dữ liệu mẫu",
+    "language_label": "Ngôn ngữ"
+  },
+  "topology": {
+    "compute_failed": "Không tính được topology: {{error}}"
+  },
+  "search": {
+    "placeholder": "Tìm ý tưởng… (từ khoá hoặc ngữ nghĩa)",
+    "submit": "Tìm",
+    "searching": "…",
+    "clear": "Xoá",
+    "no_results": "Không tìm thấy ý tưởng nào khớp.",
+    "results_summary": "{{count}} kết quả · vùng lân cận: {{nodeCount}} node"
+  }
+}

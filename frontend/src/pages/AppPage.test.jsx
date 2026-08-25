@@ -171,4 +171,28 @@ describe("AppPage", () => {
 
     global.fetch = originalFetch;
   });
+
+    it("toggling topology does not enter an infinite update loop and surfaces metrics", async () => {
+    const user = userEvent.setup();
+    render(<AppPage />);
+    await waitFor(() => screen.getByTestId("node-count"));
+
+    await user.click(screen.getByRole("button", { name: "Độ quan trọng" }));
+
+    await waitFor(
+      () => {
+        expect(screen.queryByText("Đang tính…")).not.toBeInTheDocument();
+      },
+      { timeout: 2000 }
+    );
+
+    expect(alertSpy).not.toHaveBeenCalledWith(expect.stringMatching(/không tính được topology/i));
+
+    await user.click(screen.getByRole("button", { name: "Độ quan trọng" }));
+    await user.click(screen.getByRole("button", { name: "Độ quan trọng" }));
+    await waitFor(() => {
+      expect(screen.queryByText("Đang tính…")).not.toBeInTheDocument();
+    });
+    expect(alertSpy).not.toHaveBeenCalledWith(expect.stringMatching(/không tính được topology/i));
+  });
 });

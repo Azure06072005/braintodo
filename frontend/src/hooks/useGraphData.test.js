@@ -15,6 +15,72 @@ describe("useGraphData (mock mode)", () => {
     localStorage.clear();
   });
 
+  it("importGraph recomputes clusters so imported nodes are covered by a cluster", async () => {
+    const { result } = renderHook(() => useGraphData("mock"));
+
+    let importResult;
+    await act(async () => {
+      importResult = await result.current.importGraph({
+        nodes: [
+          { id: "old-1", title: "Imported A" },
+          { id: "old-2", title: "Imported B" },
+          { id: "old-3", title: "Imported C, unconnected" },
+        ],
+        edges: [{ source_id: "old-1", target_id: "old-2" }],
+      });
+    });
+    expect(importResult.nodes_created).toBe(3);
+
+    const importedNodeIds = result.current.nodes
+      .filter((n) => n.title.startsWith("Imported"))
+      .map((n) => n.id);
+    expect(importedNodeIds).toHaveLength(3);
+
+    const allClusteredIds = new Set(result.current.clusters.flatMap((c) => c.node_ids));
+    for (const id of importedNodeIds) {
+      expect(allClusteredIds.has(id)).toBe(true);
+    }
+
+    const clusterOf = (id) => result.current.clusters.find((c) => c.node_ids.includes(id));
+    const [a, b, c] = importedNodeIds;
+    expect(clusterOf(a).cluster_id).toBe(clusterOf(b).cluster_id);
+    expect(clusterOf(c).cluster_id).not.toBe(clusterOf(a).cluster_id);
+  });
+
+  it("createNode and deleteNode keep clusters covering every current node", async () => {
+    const { result } = renderHook(() => useGraphData("mock"));
+
+    let created;
+    await act(async () => {
+      created = await result.current.createNode({ title: "Isolated new idea" });
+    });
+    let allClusteredIds = new Set(result.current.clusters.flatMap((c) => c.node_ids));
+    expect(allClusteredIds.has(created.id)).toBe(true);
+
+    await act(async () => {
+      await result.current.deleteNode(created.id);
+    });
+    allClusteredIds = new Set(result.current.clusters.flatMap((c) => c.node_ids));
+    expect(allClusteredIds.has(created.id)).toBe(false);
+  });
+
+  it("returns referentially stable function identities across re-renders (regression for React #185 infinite loop)", () => {
+    const { result, rerender } = renderHook(() => useGraphData("mock"));
+    const first = result.current;
+    rerender();
+    const second = result.current;
+    expect(second.getTopology).toBe(first.getTopology);
+    expect(second.search).toBe(first.search);
+    expect(second.exportGraph).toBe(first.exportGraph);
+    expect(second.importGraph).toBe(first.importGraph);
+    expect(second.createNode).toBe(first.createNode);
+    expect(second.updateNode).toBe(first.updateNode);
+    expect(second.deleteNode).toBe(first.deleteNode);
+    expect(second.createEdge).toBe(first.createEdge);
+    expect(second.updateEdge).toBe(first.updateEdge);
+    expect(second.deleteEdge).toBe(first.deleteEdge);
+  });
+
   it("initializes with the mock dataset", () => {
     const { result } = renderHook(() => useGraphData("mock"));
     expect(result.current.nodes).toEqual(mockNodes);

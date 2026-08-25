@@ -9,10 +9,12 @@ import SearchBar from "../components/SearchBar";
 import ImportExportControls from "../components/ImportExportControls";
 import { useGraphData } from "../hooks/useGraphData";
 import { useAuth } from "../hooks/useAuth";
+import { useTranslation } from "../i18n/useTranslation";
 import { theme } from "../theme";
 
 export default function AppPage() {
   const { token } = useAuth();
+  const { t } = useTranslation();
   const [source, setSource] = useState("mock");
   const [selectedNodeId, setSelectedNodeId] = useState(null);
   const [modal, setModal] = useState(null);
@@ -76,7 +78,7 @@ export default function AppPage() {
       })
       .catch((err) => {
         if (cancelled) return;
-        window.alert(`Không tính được topology: ${err.message}`);
+        window.alert(t("topology.compute_failed", { error: err.message }));
         setTopologyEnabled(false);
       })
       .finally(() => {
@@ -85,7 +87,7 @@ export default function AppPage() {
     return () => {
       cancelled = true;
     };
-  }, [topologyEnabled, nodes, edges, getTopology]);
+  }, [topologyEnabled, nodes, edges, getTopology, t]);
 
   async function handleSearch(query) {
     setSearching(true);

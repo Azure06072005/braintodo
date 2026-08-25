@@ -1,11 +1,5 @@
 import { theme } from "../theme";
-
-const STATUS_LABEL = {
-  open: { text: "● Live", color: "#1d9e75" },
-  closed: { text: "○ Mất kết nối", color: theme.textMuted },
-  error: { text: "● Lỗi kết nối", color: "#d85a30" },
-  disconnected: null,
-};
+import { useTranslation } from "../i18n/useTranslation";
 
 export default function TopBar({
   source,
@@ -23,24 +17,34 @@ export default function TopBar({
   onTogglePanel,
   extraActions,
 }) {
+  const { t, locale, setLocale, supportedLocales } = useTranslation();
+
+  const STATUS_LABEL = {
+    open: { text: t("topbar.status_live"), color: "#1d9e75" },
+    closed: { text: t("topbar.status_disconnected"), color: theme.textMuted },
+    error: { text: t("topbar.status_error"), color: "#d85a30" },
+    disconnected: null,
+  };
   const statusInfo = STATUS_LABEL[realtimeStatus];
 
   return (
     <div className="bt-topbar" style={styles.bar}>
-      <span style={{ fontSize: 14, fontWeight: 500, color: theme.textPrimary }}>braintodo</span>
+      <span style={{ fontSize: 14, fontWeight: 500, color: theme.textPrimary }}>
+        {t("common.app_name")}
+      </span>
 
       <button className="bt-btn" onClick={onNewNode} style={styles.newBtn}>
-        + Ý tưởng mới
+        {t("topbar.new_node")}
       </button>
       <button className="bt-btn" onClick={onNewEdge} style={styles.newBtn}>
-        + Liên kết
+        {t("topbar.new_edge")}
       </button>
       <button
         className="bt-btn"
         onClick={onToggleTopology}
         style={topologyEnabled ? { ...styles.newBtn, ...styles.newBtnActive } : styles.newBtn}
       >
-        {topologyLoading ? "Đang tính…" : "Độ quan trọng"}
+        {topologyLoading ? t("topbar.topology_computing") : t("topbar.topology_toggle")}
       </button>
       <button
         className="bt-btn"
@@ -49,28 +53,38 @@ export default function TopBar({
           clusterOverlayEnabled ? { ...styles.newBtn, ...styles.newBtnActive } : styles.newBtn
         }
       >
-        Cụm ý tưởng
+        {t("topbar.cluster_toggle")}
       </button>
 
-      {/* Chỉ có tác dụng ở màn hình hẹp — mở panel chi tiết dạng drawer.
-          Ẩn qua CSS (không phải JS) để logic đơn giản, panel luôn nhận được
-          class "mở" từ App, chỉ là trên desktop panel vốn đã hiện sẵn. */}
       <button className="bt-btn bt-panel-toggle" onClick={onTogglePanel} style={styles.newBtn}>
-        Chi tiết
+        {t("topbar.detail_toggle")}
       </button>
 
       <div className="bt-topbar-actions" style={{ display: "flex", alignItems: "center", gap: 10, marginLeft: "auto" }}>
         {statusInfo && (
           <span style={{ fontSize: 12, color: statusInfo.color }}>{statusInfo.text}</span>
         )}
-        {loading && <span style={{ fontSize: 12, color: theme.textMuted }}>Đang tải…</span>}
+        {loading && <span style={{ fontSize: 12, color: theme.textMuted }}>{t("common.loading")}</span>}
         {error && (
           <span style={{ fontSize: 12, color: "#e59a2f" }}>
-            Không nối được API thật ({error}) — đang dùng dữ liệu mẫu
+            {t("topbar.api_error", { error })}
           </span>
         )}
 
         {extraActions}
+
+        <select
+          aria-label={t("topbar.language_label")}
+          value={locale}
+          onChange={(e) => setLocale(e.target.value)}
+          style={styles.langSelect}
+        >
+          {supportedLocales.map((code) => (
+            <option key={code} value={code}>
+              {code.toUpperCase()}
+            </option>
+          ))}
+        </select>
 
         <div style={styles.toggleGroup}>
           <button
@@ -78,14 +92,14 @@ export default function TopBar({
             onClick={() => onSourceChange("mock")}
             style={source === "mock" ? styles.toggleActive : styles.toggle}
           >
-            Mock
+            {t("topbar.source_mock")}
           </button>
           <button
             className="bt-btn"
             onClick={() => onSourceChange("live")}
             style={source === "live" ? styles.toggleActive : styles.toggle}
           >
-            API thật
+            {t("topbar.source_live")}
           </button>
         </div>
       </div>
@@ -143,5 +157,14 @@ const styles = {
     borderColor: theme.importantRing,
     color: "#0b0e14",
     fontWeight: 500,
+  },
+  langSelect: {
+    background: "#1c2029",
+    color: theme.textSecondary,
+    border: `1px solid ${theme.panelBorder}`,
+    borderRadius: 6,
+    fontSize: 12.5,
+    padding: "4px 6px",
+    cursor: "pointer",
   },
 };

@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import SearchBar from "./SearchBar";
+import { I18nProvider } from "../i18n/I18nContext";
 
 const searchResult = {
   matches: [
@@ -98,5 +99,23 @@ describe("SearchBar", () => {
     // clears the result (as onClear is expected to do), it should go away.
     rerender(<SearchBar onSearch={vi.fn()} onClear={onClear} onSelectMatch={vi.fn()} result={null} searching={false} />);
     expect(screen.queryByRole("button", { name: "Xoá" })).not.toBeInTheDocument();
+  });
+
+  it("renders in English when mounted under an I18nProvider set to 'en'", () => {
+    render(
+      <I18nProvider>
+        <SearchBar onSearch={vi.fn()} onClear={vi.fn()} onSelectMatch={vi.fn()} result={null} searching={false} />
+      </I18nProvider>
+    );
+    expect(screen.getByPlaceholderText(/tìm ý tưởng/i)).toBeInTheDocument();
+
+    localStorage.setItem("bt-locale", "en");
+    render(
+      <I18nProvider>
+        <SearchBar onSearch={vi.fn()} onClear={vi.fn()} onSelectMatch={vi.fn()} result={null} searching={false} />
+      </I18nProvider>
+    );
+    expect(screen.getByPlaceholderText(/search ideas/i)).toBeInTheDocument();
+    localStorage.removeItem("bt-locale");
   });
 });
