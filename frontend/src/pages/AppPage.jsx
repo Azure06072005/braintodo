@@ -42,7 +42,7 @@ export default function AppPage() {
     getTopology,
     exportGraph,
     importGraph,
-  } = useGraphData(source);
+  } = useGraphData(source, undefined, token);
 
   const nodesById = useMemo(() => new Map(nodes.map((n) => [n.id, n])), [nodes]);
   const selectedNode = selectedNodeId ? nodesById.get(selectedNodeId) : null;

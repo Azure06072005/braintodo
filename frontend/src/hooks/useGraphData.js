@@ -52,6 +52,8 @@ export function useGraphData(source, apiBaseUrl = DEFAULT_API_BASE_URL, token = 
   const client = useMemo(() => createApiClient(apiBaseUrl, token), [apiBaseUrl, token]);
 
   const refetchAll = useCallback(async () => {
+  
+  async function refetchAllImpl() {
     const [liveNodes, liveEdges, liveClusters, liveSuggestions] = await Promise.all([
       client.listNodes(),
       client.listEdges(),

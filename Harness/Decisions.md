@@ -6,6 +6,43 @@ log entry was written (reconstructed from prior session summaries); the
 underlying decisions were made in earlier sessions whose exact dates weren't
 recorded — fix the dates if you have the real commit history.
 
+## 2026-08-24: EMBEDDING_PROVIDER config + fake fallback for offline/restricted deploys
+- Reason: `get_embedder()` in `src/braintodo/api/nodes.py` always hardcoded
+  the real `SentenceTransformerProvider`, which downloads model weights from
+  huggingface.co on first use. Every test in the suite overrides
+  `get_embedder` with `FakeEmbeddingProvider`, so this was never actually
+  exercised — a network-restricted or offline deploy would 500 on every
+  `POST /nodes` despite F001 being marked `passing` and the full suite being
+  green. Discovered this session while running the genuinely full suite with
+  torch/torch-geometric/sentence-transformers installed for the first time.
+- Fix: `embedding_provider` setting (`"sentence_transformer"` default |
+  `"fake"`) on `Settings`; `get_embedder()` branches on it; unknown values
+  raise `RuntimeError` rather than silently defaulting. Model-load `OSError`
+  in `SentenceTransformerProvider` is now wrapped in an actionable
+  `RuntimeError` pointing at `EMBEDDING_PROVIDER=fake` as the escape hatch,
+  instead of surfacing a raw connection stack trace.
+- Rejected: silently catching the `OSError` and falling back to the fake
+  provider automatically — this would silently degrade embedding quality in
+  production without anyone noticing (a misconfigured deploy would just get
+  worse embeddings, not an error). Explicit opt-in via
+  `EMBEDDING_PROVIDER=fake` was chosen so the fallback is a deliberate,
+  visible choice, not a silent one.
+- Constraint: any new `EmbeddingProvider` implementation should be wired
+  through this same `settings.embedding_provider` switch rather than adding
+  another hardcoded default in `api/nodes.py`. Tests should exercise
+  `get_embedder()` directly (see `tests/test_embedding_provider_config.py`)
+  rather than only relying on `dependency_overrides`, so real
+  production-path bugs like this one don't stay invisible again.
+
+## 2026-08-22: Live-mode Auth Token Threading in useGraphData & AppPage
+- Reason: REST API routes (F020) and `/ws` realtime broadcasts (F013) enforce authentication. Threading `token` from `useAuth()` in `AppPage.jsx` into `useGraphData(source, undefined, token)` and `createApiClient(baseUrl, token)` ensures REST calls attach `Authorization: Bearer <token>` and WebSocket connects with `/ws?token=<token>`.
+- Constraint: Live-mode API hooks must accept and pass auth tokens from auth state.
+
+## 2026-08-22: GraphCanvas Structural SVG Testing Scope & jsdom SVGSVGElement Polyfill
+- Reason: D3 force simulation animates asynchronously over multiple frames and d3-drag accesses mouse event window views not fully implemented in jsdom. Component tests focus on synchronous SVG structural invariants (circle/rect counts, lines, dangling edge filtering, labels, cluster hull paths, click handlers via `fireEvent.click`, and unmount cleanup).
+- Polyfill: `SVGSVGElement.prototype.width/height` polyfill in `src/test/setup.js` provides `baseVal.value` fallbacks for `d3-zoom` in jsdom.
+- Constraint: Canvas tests assert structural DOM presence rather than simulated floating-point coordinates.
+
 ## 2026-08-22: F013 — /ws authenticated via token query param and scoped per-owner
 - Reason: WebSocket handshakes initiated by browser JavaScript cannot include custom HTTP headers (such as `Authorization: Bearer <token>`). Passing the standard JWT access token via `ws://host/ws?token=<access_token>` query parameter allows authenticating the user during handshake without requiring extra handshake protocols.
 - Scoping: `ConnectionManager` tags each active WebSocket with the authenticated `owner_id`. `broadcast()` filters recipient sockets to matching `owner_id`, closing the data-isolation gap where one user's graph edits were previously broadcast to all connected clients.

@@ -3,6 +3,93 @@
 Update this at the end of every session (Principle 5 & 12). This is what the
 next session reads to avoid starting from zero.
 
+## Session — 2026-08-24 (F021: Real full-suite run w/ torch installed; found + fixed silent offline embedding-provider bug)
+- Started by doing something no prior session had actually done: installed
+  the real heavy deps (`torch`, `torch-geometric`, `sentence-transformers`)
+  into a fresh venv and ran the genuinely full `pytest -x -q` (not the
+  fast/excluded suite). Result: 113 passed, 1 skipped (`test_neo4j_store.py`
+  self-skips correctly — no live Neo4j reachable in this sandbox).
+- That full run stayed green, but investigating *why* the GNN/embedding
+  tests never needed torch turned up a real, previously-invisible bug:
+  `get_embedder()` in `src/braintodo/api/nodes.py` always hardcoded the real
+  `SentenceTransformerProvider`, which downloads model weights from
+  `huggingface.co` on first use with **no fallback and no config knob**.
+  Every single test in the suite overrides `get_embedder` with
+  `FakeEmbeddingProvider`, so this production code path had never been
+  exercised by anything, ever. Confirmed directly: in this network-restricted
+  sandbox, `get_sentence_transformer_provider()` raises a raw
+  `OSError: We couldn't connect to 'https://huggingface.co'...` — meaning
+  F001 (Node CRUD, marked `passing`) would 500 on every `POST /nodes` in any
+  offline/restricted deploy, invisibly, because tests never touch this path.
+- **Fix (F021)**:
+  - Added `embedding_provider` (`"sentence_transformer"` default | `"fake"`)
+    and `sentence_transformer_model` settings to `src/braintodo/config.py`.
+  - `get_embedder()` in `src/braintodo/api/nodes.py` now branches on
+    `settings.embedding_provider`; unknown values raise a clear
+    `RuntimeError` rather than silently falling through.
+  - `SentenceTransformerProvider.__init__` now wraps the model-load `OSError`
+    in an actionable `RuntimeError` explaining the network/HF_HOME
+    requirement and pointing at `EMBEDDING_PROVIDER=fake` as the escape
+    hatch, instead of surfacing a raw HF stack trace.
+  - `get_sentence_transformer_provider()` now takes a `model_name` param
+    (still `@lru_cache` singleton) so `settings.sentence_transformer_model`
+    is actually respected.
+  - Added `tests/test_embedding_provider_config.py` (5 tests) exercising
+    `get_embedder()` directly (not via `dependency_overrides`) so a
+    regression here would actually be caught: fake-provider selection,
+    singleton caching, deterministic embedding, unknown-provider error, and
+    the sentence-transformer-unreachable actionable-error path.
+- Verification evidence:
+  - `pytest tests/test_embedding_provider_config.py -v` → 5/5 passed.
+  - Full suite after fix: `pytest -q` → **118 passed, 1 skipped** (up from
+    113; no regressions).
+  - Smoke-tested both directions through the *real* (non-test-override)
+    dependency path: default config + unreachable HF → clean `RuntimeError`
+    (previously raw `OSError`); `EMBEDDING_PROVIDER=fake` + real
+    `POST /auth/register → verify → login → POST /nodes` flow → `201` with a
+    real embedding vector returned.
+  - `ruff check .` → clean.
+  - `mypy src` → 1 pre-existing error (`SentenceTransformerProvider.dimension:
+    int | None vs int` in `api/nodes.py`), confirmed via `git stash` to
+    predate this session's changes — not introduced or fixed here, flagged
+    below as still open.
+  - `feature_list.json` integrity check: 36 unique ids, 0 duplicates (new
+    `F021` entry added; nothing else touched).
+- Still open (not addressed this session):
+  1. Real Neo4j has still never been exercised by any session — needs
+     `docker compose up -d neo4j` in an environment with docker access.
+  2. Full `docker-compose` stack has never been run end-to-end.
+  3. Pre-existing `mypy` error in `SentenceTransformerProvider.dimension`
+     typing (`int | None` vs `int`) — unrelated to this session's fix,
+     needs its own pass.
+  4. If real (non-fake) semantic embeddings are wanted in a genuinely
+     offline/restricted deploy, the actual fix is baking the HF model into
+     the image at build time or documenting `HF_HOME` pre-caching — not
+     addressed here since it needs a real network-enabled build step.
+- Next session should:
+  1. Get Neo4j running (docker) and actually execute `test_neo4j_store.py`
+     for the first time.
+  2. Decide on and implement the HF model pre-caching strategy for
+     production if real embeddings (not the fake fallback) are required
+     offline.
+  3. Take a pass at the pre-existing `mypy` error in
+     `sentence_transformer_provider.py`/`api/nodes.py`.
+
+## Session — 2026-08-22 (FE008 GraphCanvas Tests, Live Auth Token Threading & 35/35 Features Passing)
+- Completed:
+  - Fixed live-mode auth token threading across `createApiClient`, `useGraphData`, and `AppPage.jsx`.
+  - Added live-mode token regression tests to `frontend/src/hooks/useGraphData.test.js`.
+  - Added SVGSVGElement width/height polyfill to `src/test/setup.js`.
+  - Created `frontend/src/components/GraphCanvas.test.jsx` (9 tests) covering shape selection, edge lines, dangling edge filtering, node labels, click handlers, cluster hulls, and clean unmount.
+  - Flipped `FE008` (GraphCanvas) to `passing` in `feature_list.json` — all 35 features in the project are now `passing`.
+  - Documented decisions in `Decisions.md`.
+- Verification evidence:
+  - Frontend: `npm run test` (14 files, 80 passed), `npm run build` (610 modules), `npm run lint` (0/0, 38 files).
+  - Backend: `pytest` (113 passed, 1 skipped), `ruff check .` clean, `mypy src tests` 0 errors.
+  - Feature list integrity: 35 unique IDs, all passing, 0 duplicates.
+- Next session should:
+  1. Perform end-to-end integration testing with Docker Compose services.
+
 ## Session — 2026-08-22 (F013 Realtime WebSocket Auth & Per-User Scoping)
 - Completed:
   - Scoped `/ws` broadcasts per owner in `ConnectionManager` (`src/braintodo/realtime/manager.py`).

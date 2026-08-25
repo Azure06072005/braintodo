@@ -1,5 +1,21 @@
 # Progress Log (Gemini sessions) — braintodo
 
+## Session — 2026-08-22 (FE008 GraphCanvas Tests, Live Auth Token Threading & 35/35 Features Passing)
+- **Completed**: Fixed live-mode auth token threading across `createApiClient`, `useGraphData`, and `AppPage.jsx`. Added SVGSVGElement width/height polyfill to `src/test/setup.js`. Added `src/components/GraphCanvas.test.jsx` (9 tests).
+  - Wired `token` from `useAuth()` in `AppPage.jsx` into `useGraphData(source, undefined, token)`.
+  - Added live-mode token regression tests to `frontend/src/hooks/useGraphData.test.js`.
+  - Created `frontend/src/components/GraphCanvas.test.jsx` covering shape selection, edge lines, dangling edge filtering, node title labels, onNodeClick, cluster hulls, and clean unmount.
+  - Flipped `FE008` (GraphCanvas) to `passing` in `Harness/feature_list.json`. All 35 features in the project are now `passing`.
+  - Documented decisions in `Harness/Decisions.md`.
+- **Verification Evidence**:
+  - Frontend Tests: `npm run test` -> 14 files passed, 80/80 tests passed.
+  - Frontend Build: `npm run build` -> 610 modules transformed, clean bundle.
+  - Frontend Lint: `npm run lint` -> 0 warnings, 0 errors across 38 files.
+  - Backend Tests: `pytest` -> 113 passed, 1 skipped.
+  - Backend Linters & Types: `ruff check .` clean, `mypy src tests` 0 errors across 84 files.
+  - Harness Integrity: 35 unique feature IDs, all passing, 0 duplicates.
+- **Status**: 100% feature list passing (35/35).
+
 ## Session — 2026-08-22 (F013 Realtime WebSocket Auth & Per-User Scoping)
 - **Completed**: Implemented per-user WebSocket scoping and token query param authentication for `/ws` (F013).
   - Updated `src/braintodo/realtime/manager.py` with `ConnectionManager` mapping `WebSocket` -> `owner_id` and filtering `broadcast()` recipients by `owner_id`.
