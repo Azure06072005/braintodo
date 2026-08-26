@@ -3,9 +3,13 @@ import { theme } from "../theme";
 
 export default function LandingPage() {
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center",
-      justifyContent: "center", height: "100vh", background: theme.canvasBg,
-      color: theme.textPrimary, gap: 16, textAlign: "center", padding: 24 }}>
+    <div
+      style={{
+        display: "flex", flexDirection: "column", alignItems: "center",
+        justifyContent: "center", height: "100vh", position: "relative", zIndex: 1,
+        color: theme.textPrimary, gap: 16, textAlign: "center", padding: 24
+      }}
+    >
       <h1 style={{ margin: 0 }}>braintodo</h1>
       <p style={{ color: theme.textSecondary, maxWidth: 480 }}>
         Quản lý ý tưởng dạng đồ thị, tự động gợi ý liên kết và phát hiện cụm chủ đề bằng GNN.
