@@ -14,6 +14,8 @@ class SentenceTransformerProvider:
     """Wraps a sentence-transformers model. `dimension` matches the model's
     native output size (384 for all-MiniLM-L6-v2)."""
 
+    dimension: int
+
     def __init__(self, model_name: str = _DEFAULT_MODEL) -> None:
         # Imported lazily so the (heavy) sentence-transformers/torch
         # dependency is only loaded if this provider is actually used.
@@ -32,7 +34,16 @@ class SentenceTransformerProvider:
                 "EMBEDDING_PROVIDER=fake to use the dependency-free fake "
                 "provider instead."
             ) from exc
-        self.dimension = self._model.get_sentence_embedding_dimension()
+        # get_sentence_embedding_dimension() is typed as returning `int |
+        # None` upstream, but is None in practice only for exotic custom
+        # model heads with no fixed output size - not a case this app
+        # supports anyway (EmbeddingProvider.dimension is a required int).
+        # Falling back to 384 (all-MiniLM-L6-v2's real dimension) rather
+        # than asserting/crashing keeps this provider usable even against
+        # such a model, while still satisfying the EmbeddingProvider
+        # protocol's `dimension: int` for mypy.
+        dim = self._model.get_sentence_embedding_dimension()
+        self.dimension = int(dim) if dim is not None else 384
 
     def embed(self, text: str) -> list[float]:
         vector = self._model.encode(text, normalize_embeddings=True)

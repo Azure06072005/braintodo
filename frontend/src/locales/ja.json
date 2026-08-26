@@ -28,5 +28,22 @@
     "clear": "クリア",
     "no_results": "一致するアイデアが見つかりません。",
     "results_summary": "{{count}} 件の結果 · 近傍: {{nodeCount}} ノード"
+  },
+  "node_form": {
+    "title_label": "タイトル *",
+    "content_label": "内容",
+    "tags_label": "タグ (カンマ区切り)",
+    "tags_placeholder": "project, phase-3",
+    "color_label": "色",
+    "shape_label": "形",
+    "shape_circle": "circle",
+    "shape_square": "square",
+    "size_label": "サイズ",
+    "weight_label": "重み",
+    "title_required_error": "タイトルは必須です",
+    "saving": "保存中…",
+    "submit_create": "アイデアを作成",
+    "submit_edit": "変更を保存",
+    "cancel": "キャンセル"
   }
 }

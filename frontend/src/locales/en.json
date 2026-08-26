@@ -28,5 +28,22 @@
     "clear": "Clear",
     "no_results": "No matching ideas found.",
     "results_summary": "{{count}} results · neighborhood: {{nodeCount}} nodes"
+  },
+  "node_form": {
+    "title_label": "Title *",
+    "content_label": "Content",
+    "tags_label": "Tags (comma separated)",
+    "tags_placeholder": "project, phase-3",
+    "color_label": "Color",
+    "shape_label": "Shape",
+    "shape_circle": "circle",
+    "shape_square": "square",
+    "size_label": "Size",
+    "weight_label": "Weight",
+    "title_required_error": "Title cannot be empty",
+    "saving": "Saving…",
+    "submit_create": "Create idea",
+    "submit_edit": "Save changes",
+    "cancel": "Cancel"
   }
 }
