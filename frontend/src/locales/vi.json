@@ -28,5 +28,22 @@
     "clear": "Xoá",
     "no_results": "Không tìm thấy ý tưởng nào khớp.",
     "results_summary": "{{count}} kết quả · vùng lân cận: {{nodeCount}} node"
+  },
+  "node_form": {
+    "title_label": "Tiêu đề *",
+    "content_label": "Nội dung",
+    "tags_label": "Tags (phân cách bằng dấu phẩy)",
+    "tags_placeholder": "project, phase-3",
+    "color_label": "Màu",
+    "shape_label": "Hình dạng",
+    "shape_circle": "circle",
+    "shape_square": "square",
+    "size_label": "Kích thước",
+    "weight_label": "Trọng số",
+    "title_required_error": "Tiêu đề không được để trống",
+    "saving": "Đang lưu…",
+    "submit_create": "Tạo ý tưởng",
+    "submit_edit": "Lưu thay đổi",
+    "cancel": "Huỷ"
   }
 }

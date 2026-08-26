@@ -47,13 +47,34 @@ def test_unknown_provider_raises_clear_runtime_error() -> None:
         get_embedder()
 
 
-def test_sentence_transformer_unreachable_raises_actionable_error() -> None:
-    """When EMBEDDING_PROVIDER is left at its production default and
-    huggingface.co is unreachable (e.g. this sandboxed/offline test
-    environment), get_embedder() must fail with a clear, actionable
+def test_sentence_transformer_unreachable_raises_actionable_error(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """When EMBEDDING_PROVIDER is left at its production default and the
+    sentence-transformers model can't be loaded (e.g. huggingface.co is
+    unreachable), get_embedder() must fail with a clear, actionable
     RuntimeError - not a raw OSError/connection-timeout stack trace, and
     not a silent fallback that masks the misconfiguration.
+
+    Hermetic by design: this monkeypatches SentenceTransformer to always
+    raise OSError, rather than relying on the *actual* test environment
+    having no network access. The original version of this test asserted
+    the real get_sentence_transformer_provider() call would fail, which
+    only holds in a network-restricted sandbox - on a normal dev machine
+    with working internet, that version would instead try to genuinely
+    download the model (slow, flaky, and masks the real thing under test:
+    the error-wrapping behavior, not actual network conditions).
     """
+    from braintodo.api.nodes import get_sentence_transformer_provider
+
+    def _raise_os_error(*_args: object, **_kwargs: object) -> None:
+        raise OSError("simulated: could not reach huggingface.co")
+
+    monkeypatch.setattr("sentence_transformers.SentenceTransformer", _raise_os_error)
+    get_sentence_transformer_provider.cache_clear()
+
     settings.embedding_provider = "sentence_transformer"
     with pytest.raises(RuntimeError, match="EMBEDDING_PROVIDER=fake"):
         get_embedder()
+
+    get_sentence_transformer_provider.cache_clear()

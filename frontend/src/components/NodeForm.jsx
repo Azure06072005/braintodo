@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { theme } from "../theme";
+import { useTranslation } from "../i18n/useTranslation";
 
 const EMPTY = {
   title: "",
@@ -17,6 +18,7 @@ const EMPTY = {
  * để sửa trong input text, rồi split lại lúc submit.
  */
 export default function NodeForm({ mode, initial, onSubmit, onCancel }) {
+  const { t } = useTranslation();
   const [form, setForm] = useState(() =>
     initial
       ? { ...EMPTY, ...initial, tags: (initial.tags || []).join(", ") }
@@ -32,7 +34,7 @@ export default function NodeForm({ mode, initial, onSubmit, onCancel }) {
   async function handleSubmit(e) {
     e.preventDefault();
     if (!form.title.trim()) {
-      setError("Tiêu đề không được để trống");
+      setError(t("node_form.title_required_error"));
       return;
     }
     setSubmitting(true);
@@ -43,7 +45,7 @@ export default function NodeForm({ mode, initial, onSubmit, onCancel }) {
         content: form.content,
         tags: form.tags
           .split(",")
-          .map((t) => t.trim())
+          .map((tag) => tag.trim())
           .filter(Boolean),
         weight: Number(form.weight),
         color: form.color,
@@ -58,7 +60,7 @@ export default function NodeForm({ mode, initial, onSubmit, onCancel }) {
 
   return (
     <form onSubmit={handleSubmit}>
-      <Field label="Tiêu đề *">
+      <Field label={t("node_form.title_label")}>
         <input
           style={styles.input}
           value={form.title}
@@ -67,7 +69,7 @@ export default function NodeForm({ mode, initial, onSubmit, onCancel }) {
         />
       </Field>
 
-      <Field label="Nội dung">
+      <Field label={t("node_form.content_label")}>
         <textarea
           style={{ ...styles.input, height: 70, resize: "vertical" }}
           value={form.content}
@@ -75,17 +77,17 @@ export default function NodeForm({ mode, initial, onSubmit, onCancel }) {
         />
       </Field>
 
-      <Field label="Tags (phân cách bằng dấu phẩy)">
+      <Field label={t("node_form.tags_label")}>
         <input
           style={styles.input}
           value={form.tags}
           onChange={(e) => setField("tags", e.target.value)}
-          placeholder="project, phase-3"
+          placeholder={t("node_form.tags_placeholder")}
         />
       </Field>
 
       <div style={{ display: "flex", gap: 10 }}>
-        <Field label="Màu" style={{ flex: 1 }}>
+        <Field label={t("node_form.color_label")} style={{ flex: 1 }}>
           <input
             type="color"
             style={{ ...styles.input, padding: 2, height: 32 }}
@@ -93,20 +95,20 @@ export default function NodeForm({ mode, initial, onSubmit, onCancel }) {
             onChange={(e) => setField("color", e.target.value)}
           />
         </Field>
-        <Field label="Hình dạng" style={{ flex: 1 }}>
+        <Field label={t("node_form.shape_label")} style={{ flex: 1 }}>
           <select
             style={styles.input}
             value={form.shape}
             onChange={(e) => setField("shape", e.target.value)}
           >
-            <option value="circle">circle</option>
-            <option value="square">square</option>
+            <option value="circle">{t("node_form.shape_circle")}</option>
+            <option value="square">{t("node_form.shape_square")}</option>
           </select>
         </Field>
       </div>
 
       <div style={{ display: "flex", gap: 10 }}>
-        <Field label="Kích thước" style={{ flex: 1 }}>
+        <Field label={t("node_form.size_label")} style={{ flex: 1 }}>
           <input
             type="number"
             min={4}
@@ -116,7 +118,7 @@ export default function NodeForm({ mode, initial, onSubmit, onCancel }) {
             onChange={(e) => setField("size", e.target.value)}
           />
         </Field>
-        <Field label="Trọng số" style={{ flex: 1 }}>
+        <Field label={t("node_form.weight_label")} style={{ flex: 1 }}>
           <input
             type="number"
             step={0.1}
@@ -131,10 +133,14 @@ export default function NodeForm({ mode, initial, onSubmit, onCancel }) {
 
       <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
         <button type="submit" disabled={submitting} style={styles.primaryBtn}>
-          {submitting ? "Đang lưu…" : mode === "create" ? "Tạo ý tưởng" : "Lưu thay đổi"}
+          {submitting
+            ? t("node_form.saving")
+            : mode === "create"
+              ? t("node_form.submit_create")
+              : t("node_form.submit_edit")}
         </button>
         <button type="button" onClick={onCancel} style={styles.secondaryBtn}>
-          Huỷ
+          {t("node_form.cancel")}
         </button>
       </div>
     </form>
