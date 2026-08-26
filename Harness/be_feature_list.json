@@ -1,0 +1,215 @@
+{
+  "_comment": "Backend (F0xx) features, split out from Harness/feature_list.json. Cross-layer dependencies point at frontend_feature_list.json via depends_on[].layer. Priority: P0 = foundational, P1 = core capability, P2 = secondary surface/enhancement. State machine: not_started -> active -> passing (irreversible) or active -> blocked.",
+  "layer": "backend",
+  "sibling_file": "frontend_feature_list.json",
+  "features": [
+    {
+      "id": "F001",
+      "name": "Node CRUD",
+      "behavior": "Create/read/update/delete an idea Node (title, content, tags, status, importance weight) via REST",
+      "verification": "pytest tests/test_nodes.py -x",
+      "state": "passing",
+      "evidence": "pytest passed; 107 full suite passed. Re-confirmed 2026-08-19: this entry's id had been accidentally overwritten to 'FE001' in commit 8d6979a (likely a find/replace mistake while adding the real FE001 Landing-page entry), destroying the original F001 (Node CRUD) tracking entry and creating a duplicate FE001 id. Restored from pre-corruption commit 6fc366f. Re-verified independently on a fresh clone of main (b00fb30): pytest tests/test_nodes.py -x -> passed as part of the 92-test fast suite."
+    },
+    {
+      "id": "F002",
+      "name": "Edge CRUD with typed relations",
+      "behavior": "Create/read/update/delete an Edge between two Nodes with a relation type (e.g. leads_to, resolves, extends, contradicts)",
+      "verification": "pytest tests/test_edges.py -x",
+      "state": "passing",
+      "evidence": "pytest passed; 107 full suite passed"
+    },
+    {
+      "id": "F003",
+      "name": "Text embedding pipeline",
+      "behavior": "Node content is converted to a semantic text embedding via a Transformer model",
+      "verification": "pytest tests/test_embedding.py -x",
+      "state": "passing",
+      "evidence": "pytest tests/test_embedding.py -x passed 3/3 tests; 107 full suite passed. Re-confirmed 2026-08-19: this entry's id had been accidentally overwritten to 'FE003' in commit 8d6979a (same mistake as F001/FE001 - see that entry's evidence), destroying the original F003 (Text embedding pipeline) tracking entry and creating a duplicate FE003 id. Restored from pre-corruption commit 6fc366f. Re-verified independently on a fresh clone of main (b00fb30): part of the 92-test fast suite (pytest tests/test_embedding.py -x)."
+    },
+    {
+      "id": "F004",
+      "name": "Graph-aware node embeddings (GNN)",
+      "behavior": "Text embeddings combined with the adjacency matrix through a GCN/GAT/GraphSAGE layer to produce graph-aware node embeddings",
+      "verification": "pytest tests/test_gnn.py tests/test_gnn_api.py tests/test_gnn_service.py -x",
+      "state": "passing",
+      "evidence": "pytest tests/test_gnn*.py passed 9/9 tests; 107 full suite passed"
+    },
+    {
+      "id": "F005",
+      "name": "Link prediction / smart link suggestions",
+      "behavior": "Endpoint returns unconnected node pairs with a similarity score >= threshold as suggested links",
+      "verification": "pytest tests/test_link_prediction.py tests/test_links_api.py -x",
+      "state": "passing",
+      "evidence": "pytest tests/test_link*.py passed 6/6 tests; 107 full suite passed"
+    },
+    {
+      "id": "F006",
+      "name": "Community detection / clustering",
+      "behavior": "Nodes are grouped into color-coded clusters ('mind regions') based on graph + semantic similarity",
+      "verification": "pytest tests/test_clustering.py tests/test_clusters_api.py -x",
+      "state": "passing",
+      "evidence": "pytest tests/test_cluster*.py passed 6/6 tests; 107 full suite passed"
+    },
+    {
+      "id": "F007",
+      "name": "Graph topology analytics",
+      "behavior": "Compute degree centrality, betweenness centrality, and PageRank per node",
+      "verification": "pytest tests/test_topology.py -x",
+      "state": "passing",
+      "evidence": "pytest tests/test_topology.py passed 6/6 tests; 107 full suite passed"
+    },
+    {
+      "id": "F008",
+      "name": "Semantic + topological search",
+      "behavior": "Search endpoint supports keyword search combined with sub-graph / breadth-first expansion from a seed node",
+      "verification": "pytest tests/test_search.py tests/test_search_api.py -x",
+      "state": "passing",
+      "evidence": "pytest tests/test_search*.py passed 9/9 tests; 107 full suite passed"
+    },
+    {
+      "id": "F009",
+      "name": "User registration",
+      "behavior": "POST /auth/register creates a User with a hashed password and is_verified=False",
+      "verification": "pytest tests/test_auth_api.py -k register -x",
+      "state": "passing",
+      "evidence": "Re-verified 2026-08-19 on a fresh clone of main (7b267b9): tests/test_auth_api.py exercises this endpoint end to end (register -> FakeEmailSender captures verification link). Confirmed live in repo at src/braintodo/api/auth.py."
+    },
+    {
+      "id": "F010",
+      "name": "Email verification",
+      "behavior": "GET /auth/verify?token=... marks the matching User as is_verified=True using a single-use, expiring EmailVerificationToken",
+      "verification": "pytest tests/test_auth_api.py -k verify -x",
+      "state": "passing",
+      "evidence": "Re-verified 2026-08-19 on a fresh clone of main (7b267b9): src/braintodo/api/auth.py, src/braintodo/db/repository.py TokenRepository.get_valid() checks expiry."
+    },
+    {
+      "id": "F011",
+      "name": "Login (JWT issuance)",
+      "behavior": "POST /auth/login returns a bearer access_token (TokenResponse) for a verified user with correct credentials",
+      "verification": "pytest tests/test_auth_api.py -k login -x",
+      "state": "passing",
+      "evidence": "Re-verified 2026-08-19 on a fresh clone of main (7b267b9): src/braintodo/api/auth.py; this is also the login path every F020 test relies on via tests/conftest.py's make_token()."
+    },
+    {
+      "id": "F012",
+      "name": "Get current user (/auth/me)",
+      "behavior": "GET /auth/me returns the authenticated user's own profile (id, email, is_verified), 401 without a valid token",
+      "verification": "pytest tests/test_auth_api.py -x",
+      "state": "passing",
+      "evidence": "Re-verified 2026-08-19 on a fresh clone of main (7b267b9): positive path covered inside test_register_then_verify_then_login (asserts GET /auth/me with a valid token returns 200 + correct email); test_me_without_token_returns_401 covers the 401 case. pytest tests/test_auth_api.py -> 3 passed."
+    },
+    {
+      "id": "F013",
+      "name": "Realtime graph event broadcast (WebSocket)",
+      "behavior": "GET /ws?token=... upgrades to a WebSocket; clients receive node_created/node_updated/node_deleted/edge_created/edge_updated/edge_deleted/graph_imported events scoped to their own owner_id",
+      "verification": "pytest tests/test_realtime_api.py tests/test_realtime_manager.py tests/test_graph_export_import.py -x",
+      "state": "passing",
+      "evidence": "pytest tests/test_realtime_api.py tests/test_realtime_manager.py tests/test_graph_export_import.py passed 14/14 tests; cross-user event isolation verified; fast test suite 98 passed"
+    },
+    {
+      "id": "F014",
+      "name": "Node/Edge pagination",
+      "behavior": "GET /nodes and GET /edges accept skip/limit query params and return {items, total, skip, limit}",
+      "verification": "pytest tests/test_nodes.py -k paginated -x",
+      "state": "passing",
+      "evidence": "Re-verified 2026-08-19 on a fresh clone of main (7b267b9): test_list_nodes_paginated in tests/test_nodes.py, backed by GraphStore.list_nodes_paginated/list_edges_paginated (owner_id-scoped since F020)."
+    },
+    {
+      "id": "F015",
+      "name": "Cluster detection API",
+      "behavior": "GET /clusters returns the caller's detected communities (see F006 for the underlying algorithm) - the HTTP surface + auth wiring specifically",
+      "verification": "pytest tests/test_clusters_api.py -x",
+      "state": "passing",
+      "evidence": "Re-verified 2026-08-19 on a fresh clone of main (7b267b9), part of the fast-suite run."
+    },
+    {
+      "id": "F016",
+      "name": "Link suggestion API",
+      "behavior": "GET /links/suggestions returns the caller's ranked candidate edges (see F005 for the underlying algorithm) - the HTTP surface + auth wiring specifically",
+      "verification": "pytest tests/test_links_api.py -x",
+      "state": "passing",
+      "evidence": "Re-verified 2026-08-19 on a fresh clone of main (7b267b9), part of the fast-suite run."
+    },
+    {
+      "id": "F017",
+      "name": "Topology analytics API",
+      "behavior": "GET /analytics/topology returns the caller's per-node degree/centrality/pagerank metrics (see F007 for the underlying algorithm) - the HTTP surface + auth wiring specifically",
+      "verification": "pytest tests/test_analytics_api.py -x",
+      "state": "passing",
+      "evidence": "Re-verified 2026-08-19 on a fresh clone of main (7b267b9), part of the fast-suite run."
+    },
+    {
+      "id": "F018",
+      "name": "GNN recompute API",
+      "behavior": "POST /gnn/recompute recomputes graph-aware embeddings for the caller's own graph and returns {updated: <count>} (see F004 for the underlying algorithm) - the HTTP surface + auth wiring specifically",
+      "verification": "pytest tests/test_gnn_api.py -x",
+      "state": "passing",
+      "evidence": "Re-verified 2026-08-19 on a fresh clone of main (7b267b9): tests/test_gnn_api.py overrides get_graph_embedder with FakeGraphEmbedder so it runs torch-free; part of the fast-suite run (92 passed)."
+    },
+    {
+      "id": "F019",
+      "name": "Graph export/import with WebSocket broadcast",
+      "behavior": "Export the full graph (nodes+edges) to a file and re-import it; other connected clients receive a WebSocket broadcast when the graph changes via import",
+      "verification": "pytest tests/test_graph_export_import.py -x",
+      "state": "passing",
+      "evidence": "pytest tests/test_graph_export_import.py passed; 107 full suite passed"
+    },
+    {
+      "id": "F020",
+      "name": "Auth enforcement + per-user graph isolation",
+      "behavior": "All graph API routes require a valid JWT; Node model gains an owner_id field so each user sees only their own graph instead of one shared graph",
+      "verification": "pytest tests/test_auth_enforcement.py -x",
+      "state": "passing",
+      "evidence": "pytest tests/test_auth_enforcement.py -x passed 21/21 assertions; full test suite 107 passed; ruff check passed; mypy passed 0 errors"
+    },
+    {
+      "id": "F021",
+      "name": "Configurable embedding provider + offline/no-network fallback",
+      "behavior": "get_embedder() (src/braintodo/api/nodes.py) reads settings.embedding_provider ('sentence_transformer' default | 'fake'). SentenceTransformerProvider wraps model-load OSError in a clear, actionable RuntimeError instead of a raw huggingface.co connection stack trace. Fixes a real gap: production always hardcoded the real SentenceTransformerProvider with no fallback, but every existing test overrode get_embedder with FakeEmbeddingProvider, so this path had never been exercised by any test in any session - a network-restricted deploy would 500 on every POST /nodes despite a fully green suite.",
+      "verification": "pytest tests/test_embedding_provider_config.py -x",
+      "state": "passing",
+      "evidence": "Discovered 2026-08-24: after installing torch/torch-geometric/sentence-transformers for the first time in any session and running the FULL suite (not the fast/excluded suite), confirmed get_sentence_transformer_provider() raises a raw OSError connecting to huggingface.co in this network-restricted sandbox - i.e. F001 (Node CRUD) would 500 on every create in an offline deploy despite being marked passing. Fixed via EMBEDDING_PROVIDER setting + FakeEmbeddingProvider fallback + clear RuntimeError. Verified both directions: (1) default 'sentence_transformer' with no network reachable raises RuntimeError with actionable message (was raw OSError before fix); (2) EMBEDDING_PROVIDER=fake exercised through the REAL api.nodes.get_embedder -> NodeRepository dependency-injection path (not a test override) successfully returns 201 on POST /nodes with a real embedding vector. Full suite re-run after fix: 118 passed, 1 skipped (test_neo4j_store.py self-skips, no live Neo4j in this sandbox), ruff check . clean. UPDATE 2026-08-25: a second session (running on a machine with real internet access, unlike this sandbox) caught a real gap in the original test_sentence_transformer_unreachable_raises_actionable_error test - it asserted real network failure rather than mocking it, so it only passed in a network-restricted environment and would have tried to genuinely download the model (slow/flaky, and not actually testing the error-wrapping logic) on any machine with working internet. Fixed by monkeypatching sentence_transformers.SentenceTransformer to raise OSError, making the test hermetic regardless of the running environment's actual network state. The same session also resolved the previously-flagged pre-existing mypy error (SentenceTransformerProvider.dimension: int | None vs int) via an explicit dimension: int class annotation + int(dim) if dim is not None else 384 fallback. Both fixes independently re-verified in a torch-installed sandbox (not just trusted from the reporting session, which had only run the fast/--ignore suite and not the full one): pytest -q -> 118 passed, 1 skipped (unchanged); ruff check . -> clean; mypy src tests -> 0 errors in 85 files (previously 1 pre-existing error, now genuinely resolved, not just claimed)."
+    },
+    {
+      "id": "F022",
+      "name": "Clustering service upgrade: Leiden algorithm + configurable resolution + semantic cluster labels",
+      "behavior": "Replace/augment the Louvain-based ClusterService (F006) with the Leiden algorithm (guarantees well-connected communities, higher modularity quality, faster convergence than Louvain - Louvain can produce internally-disconnected communities, Leiden fixes this). GET /clusters accepts an optional resolution query param (default matches current behavior) to let callers trade off cluster granularity. Each returned cluster also gets an auto-generated label derived from its member nodes' text embeddings (e.g. the node closest to the cluster's embedding centroid, or its title) so clusters are human-readable ('Auth & Security', 'GNN Pipeline') instead of just numeric ids.",
+      "verification": "pytest tests/test_clustering.py tests/test_clusters_api.py -x",
+      "state": "not_started",
+      "evidence": "Planned 2026-08-25 as part of the universe-theme redesign roadmap (see Decisions.md). Not yet implemented - requires adding leidenalg/python-igraph (or an equivalent Leiden implementation) as a dependency, a resolution parameter threaded through ClusterService.detect_clusters(), and a labeling step reusing the existing embedding infrastructure (F003/F004).",
+      "priority": "P1",
+      "layer": "backend",
+      "depends_on": [
+        {
+          "id": "F006",
+          "layer": "backend"
+        },
+        {
+          "id": "F004",
+          "layer": "backend"
+        }
+      ]
+    },
+    {
+      "id": "F023",
+      "name": "Optional: persisted 3D node layout position (x, y, z)",
+      "behavior": "Node model gains optional x, y, z float fields so a 3D layout position can be persisted and stay stable across reloads/sessions, instead of being recomputed from scratch by the client's force simulation every time. Deliberately optional/low-priority: the 3D graph view (FE025) works today with a purely client-computed, ephemeral layout (matching how the existing 2D d3-force layout already works) - this feature only matters if users want their 3D arrangement to persist rather than re-settle on every load.",
+      "verification": "pytest tests/test_nodes.py -k position -x",
+      "state": "not_started",
+      "evidence": "Planned 2026-08-25. Deliberately deferred/optional: confirmed the 3D graph requirement (FE025) does NOT require any backend change to function - 3D layout, like the existing 2D layout, can be computed entirely client-side from the same /nodes and /edges data already served. This entry exists only to track the persistence enhancement if it's later wanted, not as a blocker for FE025.",
+      "priority": "P2",
+      "layer": "backend",
+      "depends_on": [
+        {
+          "id": "F001",
+          "layer": "backend"
+        },
+        {
+          "id": "FE025",
+          "layer": "frontend"
+        }
+      ]
+    }
+  ]
+}

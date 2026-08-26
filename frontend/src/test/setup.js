@@ -65,3 +65,19 @@ FakeWebSocket.CLOSED = 3;
 if (typeof globalThis.WebSocket === "undefined") {
   globalThis.WebSocket = FakeWebSocket;
 }
+
+/**
+ * jsdom doesn't implement requestAnimationFrame/cancelAnimationFrame at
+ * all - any component driving a canvas animation loop (Starfield.jsx)
+ * would throw "requestAnimationFrame is not defined" the moment it mounts
+ * in a test, even though the component itself never asserts anything
+ * frame-timing-related. A simple setTimeout-based polyfill lets such
+ * components mount and unmount cleanly in tests without pulling in a real
+ * browser; it doesn't need to be frame-accurate; it just needs to exist.
+ */
+if (typeof globalThis.requestAnimationFrame !== "function") {
+  globalThis.requestAnimationFrame = (cb) => setTimeout(() => cb(Date.now()), 16);
+}
+if (typeof globalThis.cancelAnimationFrame !== "function") {
+  globalThis.cancelAnimationFrame = (id) => clearTimeout(id);
+}

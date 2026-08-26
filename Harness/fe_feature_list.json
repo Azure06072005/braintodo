@@ -1,0 +1,270 @@
+{
+  "_comment": "Frontend (FE0xx) features, split out from Harness/feature_list.json. Cross-layer dependencies point at backend_feature_list.json via depends_on[].layer. Priority: P0 = foundational, P1 = core capability, P2 = secondary surface/enhancement. State machine: not_started -> active -> passing (irreversible) or active -> blocked.",
+  "layer": "frontend",
+  "sibling_file": "backend_feature_list.json",
+  "features": [
+    {
+      "id": "FE002",
+      "name": "RegisterPage",
+      "behavior": "User registration form with email/password validation, submittal to /auth/register, and check-your-email confirmation state",
+      "verification": "cd frontend && npm run test -- src/pages/RegisterPage.test.jsx",
+      "state": "passing",
+      "evidence": "npm run test -- src/pages/RegisterPage.test.jsx passed 2/2 tests; clean build & 0 lint errors"
+    },
+    {
+      "id": "FE004",
+      "name": "LoginPage",
+      "behavior": "User login form handling credentials submission, JWT token storage via useAuth, error surfacing, and redirect to /app",
+      "verification": "cd frontend && npm run test -- src/pages/LoginPage.test.jsx",
+      "state": "passing",
+      "evidence": "npm run test -- src/pages/LoginPage.test.jsx passed 3/3 tests; clean build & 0 lint errors"
+    },
+    {
+      "id": "FE005",
+      "name": "useAuth",
+      "behavior": "React hook managing authentication state, token persistence in localStorage, login, register, and logout operations",
+      "verification": "cd frontend && npm run test -- src/hooks/useAuth.test.js",
+      "state": "passing",
+      "evidence": "npm run test -- src/hooks/useAuth.test.js passed 6/6 tests; clean build & 0 lint errors"
+    },
+    {
+      "id": "FE006",
+      "name": "useGraphData",
+      "behavior": "React hook managing graph state (nodes, edges, clusters, search, topology, import/export) across mock and live sources with WebSocket updates",
+      "verification": "cd frontend && npm run test -- src/hooks/useGraphData.test.js",
+      "state": "passing",
+      "evidence": "npm run test -- src/hooks/useGraphData.test.js passed 11/11 tests; clean build & 0 lint errors"
+    },
+    {
+      "id": "FE009",
+      "name": "NodeForm",
+      "behavior": "Accessible form for creating and editing nodes with title, content, tags, weight, color, shape, and size validations",
+      "verification": "cd frontend && npm run test -- src/components/NodeForm.test.jsx",
+      "state": "passing",
+      "evidence": "npm run test -- src/components/NodeForm.test.jsx passed 5/5 tests; clean build & 0 lint errors"
+    },
+    {
+      "id": "FE010",
+      "name": "EdgeForm",
+      "behavior": "Accessible form for connecting two nodes with source/target selection, relation type, line style, and color",
+      "verification": "cd frontend && npm run test -- src/components/EdgeForm.test.jsx",
+      "state": "passing",
+      "evidence": "npm run test -- src/components/EdgeForm.test.jsx passed 5/5 tests; clean build & 0 lint errors"
+    },
+    {
+      "id": "FE013",
+      "name": "Frontend routing shell",
+      "behavior": "React app has a working router (react-router-dom) with routes for the main app views",
+      "verification": "npm run build && npm test",
+      "state": "passing",
+      "evidence": "clean build (610 modules transformed) and full test suite passing (7 files, 38 passed)"
+    },
+    {
+      "id": "FE016",
+      "name": "Export/import UI",
+      "behavior": "UI to trigger graph export (download) and import (upload), reflecting F019 backend endpoints",
+      "verification": "cd frontend && npm run test -- src/hooks/useGraphData.test.js",
+      "state": "passing",
+      "evidence": "useGraphData.test.js export/import tests passed 2/2; clean build"
+    },
+    {
+      "id": "FE007",
+      "name": "AppPage",
+      "behavior": "Main application view orchestrating modals, node/edge creation, selection, deletion, search integration, and mock/live source switching",
+      "verification": "cd frontend && npm run test -- src/pages/AppPage.test.jsx",
+      "state": "passing",
+      "evidence": "npm run test -- src/pages/AppPage.test.jsx passed 8/8 tests; clean build & 0 lint errors"
+    },
+    {
+      "id": "FE012",
+      "name": "SearchBar",
+      "behavior": "Search input component handling query submission, matches dropdown with neighborhood summary, and clearing search state",
+      "verification": "cd frontend && npm run test -- src/components/SearchBar.test.jsx",
+      "state": "passing",
+      "evidence": "npm run test -- src/components/SearchBar.test.jsx passed 6/6 tests; clean build & 0 lint errors"
+    },
+    {
+      "id": "FE014",
+      "name": "ImportExportControls",
+      "behavior": "Export/import controls providing JSON file export download, file upload import with feedback/skipped-edge summaries, error handling, and in-flight disable state",
+      "verification": "cd frontend && npm run test -- src/components/ImportExportControls.test.jsx",
+      "state": "passing",
+      "evidence": "npm run test -- src/components/ImportExportControls.test.jsx passed 6/6 tests; clean build & 0 lint errors"
+    },
+    {
+      "id": "FE001",
+      "name": "Landing page",
+      "behavior": "Unauthenticated entry point (LandingPage.jsx) linking to login/register",
+      "verification": "cd frontend && npm run test -- src/pages/LandingPage.test.jsx",
+      "state": "passing",
+      "evidence": "LandingPage.test.jsx (2 tests, all passing) covers heading/tagline render, and links pointing to /app and /login. npm run test -> 13 files, 69 tests passing; clean build & 0 lint errors."
+    },
+    {
+      "id": "FE003",
+      "name": "Email verification page",
+      "behavior": "VerifyEmailPage.jsx reads verification token from URL and calls GET /auth/verify (F010), showing success/failure states",
+      "verification": "cd frontend && npm run test -- src/pages/VerifyEmailPage.test.jsx",
+      "state": "passing",
+      "evidence": "VerifyEmailPage.test.jsx (3 tests, all passing) covers pending->success transition on valid token, error state on rejected/expired token, and no-token handling without calling fetch. npm run test -> 13 files, 69 tests passing; clean build & 0 lint errors."
+    },
+    {
+      "id": "FE011",
+      "name": "Node detail panel",
+      "behavior": "NodeDetailPanel.jsx shows selected node detail (content, tags, embeddings, cluster membership, link suggestions, topology) with edit/delete/close actions",
+      "verification": "cd frontend && npm run test -- src/components/NodeDetailPanel.test.jsx",
+      "state": "passing",
+      "evidence": "NodeDetailPanel.test.jsx (6 tests, all passing) covers null-node placeholder, full detail rendering (title, content, tags, embeddings, cluster), empty fallbacks, bidirectional link suggestions, topology metrics, and onEdit/onDelete/onClosePanel callbacks. npm run test -> 13 files, 69 tests passing; clean build & 0 lint errors."
+    },
+    {
+      "id": "FE017",
+      "name": "useGraphData stable references (fix React #185 infinite topology loop)",
+      "behavior": "Every function returned by useGraphData (createNode, updateNode, deleteNode, createEdge, updateEdge, deleteEdge, search, getTopology, exportGraph, importGraph) is wrapped in useCallback with correct deps, and the whole returned object is wrapped in useMemo, so consumers can safely put these functions in their own effect dependency arrays without retriggering on every render. Fixes a real production crash: toggling the topology overlay threw React error #185 (\"Maximum update depth exceeded\") because getTopology was a brand-new function literal on every render, and AppPage's topology useEffect had getTopology in its dependency array - each render the effect triggered created a new getTopology reference, which retriggered the effect, in an infinite loop; the effect's own .catch() swallowed the resulting failure and surfaced it as a misleading \"Không tính được topology\" alert instead of an obvious crash.",
+      "verification": "cd frontend && npm run test -- src/hooks/useGraphData.test.js src/pages/AppPage.test.jsx",
+      "state": "passing",
+      "evidence": "Reported 2026-08-25 via a real-usage bug report (importing a VESTA progress-graph JSON). Verified the root cause directly in useGraphData.js before fixing (getTopology defined inline in the returned object literal, no memoization). Added a referential-stability regression test (useGraphData.test.js) and a full end-to-end integration regression test (AppPage.test.jsx, 'toggling topology does not enter an infinite update loop') that clicks the real 'Độ quan trọng' button through the real (non-mocked) useGraphData hook. Confirmed the integration test is a genuine regression test, not a false positive: ran it against the pre-fix useGraphData.js (via git stash) and it failed (the topology button disappeared from the DOM, consistent with the reported crash); ran it again against the fix and it passed. Full frontend suite after fix: npm run test -> 15 files, 90 passed (up from 14 files/80 passed). npm run build -> 611 modules, clean. npm run lint -> oxlint 0 warnings/0 errors, 40 files."
+    },
+    {
+      "id": "FE018",
+      "name": "Mock-mode cluster recompute on structural graph changes",
+      "behavior": "New frontend/src/clustering/mockClustering.js computes connected-component clusters ({cluster_id, node_ids}, same shape as the real backend's Louvain-based ClusterService). useGraphData's mock-mode createNode/deleteNode/createEdge/deleteEdge/importGraph now call this after any structural change (node/edge added or removed) and update the `clusters` state accordingly, instead of leaving `clusters` frozen on the hardcoded mockData.js demo clusters forever. Deliberately NOT recomputed on every nodes/edges change via a passive effect, and NOT recomputed on updateNode/updateEdge (field edits don't change graph topology) - see Decisions.md for why (the bundled demo graph is a fully-connected star that would collapse into one cluster under naive connected-components on every render).",
+      "verification": "cd frontend && npm run test -- src/clustering/mockClustering.test.js src/hooks/useGraphData.test.js",
+      "state": "passing",
+      "evidence": "Reported 2026-08-25 alongside FE017 via the same VESTA-import bug report: importing a real 28-node/29-edge graph in mock mode rendered zero cluster hulls, because GraphCanvas.jsx's hullPathFor() looks up cluster.node_ids against ids that only exist in the hardcoded mockClusters ('p', 'c1', ...), which imported nodes (fresh crypto.randomUUID() ids) never match. Added mockClustering.test.js (6 tests: connected grouping, singleton isolation, disconnected components, dangling-edge tolerance, empty graph, partition invariant) and useGraphData.test.js regression tests asserting every current node id appears in exactly one cluster after importGraph/createNode/deleteNode. npm run test -> 15 files, 90 passed. npm run build -> 611 modules, clean. npm run lint -> 0/0, 40 files."
+    },
+    {
+      "id": "FE019",
+      "name": "i18n foundation (vi/en/ja) + TopBar migration",
+      "behavior": "Lightweight, dependency-free i18n layer: frontend/src/locales/{vi,en,ja}.json dictionaries; frontend/src/i18n/translations.js (pure lookup/interpolation helpers, no JSX); frontend/src/i18n/context.js (the React context object, default value works even outside a provider so components/tests can render in isolation); frontend/src/i18n/I18nContext.jsx (I18nProvider component only); frontend/src/i18n/useTranslation.js (the useTranslation() hook, in its own file so I18nContext.jsx exports only a component - keeps React Fast Refresh / oxlint's react(only-export-components) rule clean). App.jsx wraps the router in <I18nProvider>. TopBar.jsx fully migrated off hardcoded Vietnamese strings to t(...) calls, plus a real language <select> dropdown (VI/EN/JA) that persists the choice to localStorage (key bt-locale) and updates every visible label live. Default locale is 'vi', matching the app's prior hardcoded language, so no existing test needed to change. This is the foundation piece from a 3-part i18n plan (see report); TopBar is migrated as the proof-of-concept, other components (NodeForm, EdgeForm, NodeDetailPanel, SearchBar, ImportExportControls, auth/landing pages) are NOT yet migrated - tracked as follow-up.",
+      "verification": "cd frontend && npm run test -- src/i18n/I18nContext.test.jsx src/components/TopBar.test.jsx",
+      "state": "passing",
+      "evidence": "2026-08-25, same VESTA-import bug report's Issue 3 (multilingual support vi/en/ja), Option A (custom lightweight context) chosen over i18next per the report's own recommendation, to avoid an extra dependency for a 3-language flat-key use case. Added I18nContext.test.jsx (8 tests: default-locale correctness, switching + localStorage persistence, restoring persisted locale, ignoring unsupported stored locale, interpolation, missing-key fallback, works without a provider, and a structural test asserting all 3 locale JSON files define the exact same key set so no language is silently missing a translation). Added TopBar.test.jsx (3 tests: default Vietnamese labels, full label swap across all 3 languages via the selector, error-message interpolation). Full frontend suite after change: npm run test -> 17 files, 101 passed (up from 15 files/90 passed after FE017/FE018). npm run build -> 618 modules, clean. npm run lint -> oxlint 0 warnings/0 errors, 46 files (previously 3 fast-refresh warnings during development, resolved by splitting context/translations/hook into separate non-JSX files - documented in Decisions.md). Backend suite unaffected, re-confirmed: pytest -q -> 118 passed, 1 skipped."
+    },
+    {
+      "id": "FE020",
+      "name": "SearchBar i18n migration",
+      "behavior": "SearchBar.jsx migrated off hardcoded Vietnamese strings (placeholder, submit/searching/clear button labels, no-results message, interpolated results-summary count) to t(...) calls under a new 'search' locale namespace, added to all 3 locale files (vi/en/ja). Continues the FE019 migration plan into the second named UI section from the original i18n report.",
+      "verification": "cd frontend && npm run test -- src/components/SearchBar.test.jsx",
+      "state": "passing",
+      "evidence": "2026-08-25. Added 'search' namespace (placeholder, submit, searching, clear, no_results, results_summary) to vi.json/en.json/ja.json. Existing SearchBar.test.jsx (6 tests) required zero changes - passed unmodified because the component still renders in vi by default even without an explicit <I18nProvider> wrapper (see FE019's default-context-value design). Added a 7th test rendering SearchBar under a real <I18nProvider> and switching locale via localStorage to confirm the 'en' placeholder text actually renders. Full suite: npm run test -> 17 files, 102 passed (up from 101 after FE019). npm run build -> 618 modules, clean. npm run lint -> 0/0, 46 files. The I18nContext.test.jsx 'same set of keys across locales' structural test re-confirmed passing with the new search.* keys present in all 3 files."
+    },
+    {
+      "id": "FE021",
+      "name": "NodeForm i18n migration",
+      "behavior": "NodeForm.jsx migrated off hardcoded Vietnamese strings (all field labels, tags placeholder, shape option labels, title-required validation error, saving/submit-create/submit-edit/cancel button labels) to t(...) calls under a new 'node_form' locale namespace, added to all 3 locale files (vi/en/ja). Continues the FE019/FE020 migration plan into the third component. Fixed an incidental variable-shadowing bug while migrating: the tags-splitting callback used `t` as its parameter name (`.map((t) => t.trim())`), which shadowed the `t` translation function within that closure - renamed to `tag`.",
+      "verification": "cd frontend && npm run test -- src/components/NodeForm.test.jsx",
+      "state": "passing",
+      "evidence": "2026-08-25. Added 'node_form' namespace (title_label, content_label, tags_label, tags_placeholder, color_label, shape_label, shape_circle, shape_square, size_label, weight_label, title_required_error, saving, submit_create, submit_edit, cancel) to vi.json/en.json/ja.json. Existing NodeForm.test.jsx (5 tests) required zero changes - passed unmodified because the component still renders in vi by default without an explicit <I18nProvider> wrapper (same default-context design as FE019/FE020). Added a 6th test rendering NodeForm under a real <I18nProvider> with bt-locale='en' in localStorage, confirming the English title label and Create idea/Cancel buttons actually render. Full suite: npm run test -> 17 files, 103 passed (up from 102 after FE020). npm run build -> 618 modules, clean. npm run lint -> 0 warnings/0 errors, 46 files. I18nContext.test.jsx's 'same set of keys across locales' structural test re-confirmed passing with the new node_form.* keys present in all 3 files."
+    },
+    {
+      "id": "FE008",
+      "name": "GraphCanvas",
+      "behavior": "D3/SVG force-directed graph canvas rendering nodes, edges, shapes, cluster hulls, and node selection callbacks",
+      "verification": "cd frontend && npm run test -- src/components/GraphCanvas.test.jsx",
+      "state": "passing",
+      "evidence": "GraphCanvas.test.jsx (9 tests, all passing) covers node circle/rect shape dispatch, edge lines, dangling edge filtering, title text labels, onNodeClick dispatch, cluster hull path rendering, dynamic list rerendering, and clean unmount; npm run test -> 14 files, 80 tests passing; clean build & 0 lint errors."
+    },
+    {
+      "id": "FE022",
+      "name": "Universe visual theme system (starfield background, orbit motifs, space color tokens)",
+      "behavior": "New base theme layer implemented: theme.js extended with universe-theme tokens (nebula[] gradient tints, orbitLine, starColor/starOpacityMin/Max, glow(color, strength) helper, cometDashArray) plus a deterministic seededRandom() helper - all existing tokens (canvasBg, panelBg, panelBorder, accent, depthColors, clusterPalette, etc.) kept as the same keys so every existing consumer (TopBar, GraphCanvas, all forms/pages) picks up the deepened space-black palette with zero code changes on their end. New Starfield.jsx component: canvas-based twinkling starfield (two depth layers for parallax-of-scale), CSS radial-gradient nebula glows, and SVG orbit-ring ellipses, mounted globally in App.jsx behind all routes. Respects prefers-reduced-motion (renders stars at fixed mid-brightness instead of animating). LandingPage's own opaque background removed so the global starfield shows through as the first visible use of the theme; AppPage's dense UI panels remain opaque over it by design. Foundational for FE023 (personalization), FE024 (marketing pages), and FE025 (3D graph), which all build their look on these same tokens/component.",
+      "verification": "cd frontend && npm run test -- src/theme.test.js src/components/Starfield.test.jsx",
+      "state": "passing",
+      "evidence": "2026-08-25. Implemented per the universe-theme roadmap (see Decisions.md 2026-08-25 entry) and the frontend-design skill's guidance: near-black-with-accent is flagged as a default cliche unless the brief specifies that direction, which it explicitly does here (universe theme requirement) - kept it distinctive by using the existing multi-hue palette as layered nebula depth rather than one flat accent, and by making the starfield the one deliberate 'signature' ambient element rather than decorating every surface. Added a requestAnimationFrame/cancelAnimationFrame polyfill to src/test/setup.js (jsdom has neither), following the file's existing polyfill convention (see the SVGSVGElement width/height entry already there). theme.test.js (7 tests): every pre-existing token still present, new tokens defined and correctly typed, glow() output format, colorForDepth still cycles correctly, seededRandom is deterministic/bounded/varies across seeds. Starfield.test.jsx (6 tests): renders and is aria-hidden, renders a canvas element, renders orbit-ring SVG ellipses, mounts/unmounts cleanly even when getContext('2d') returns null (jsdom's real behavior without the native 'canvas' package - explicitly simulated rather than relying on jsdom's actual behavior staying that way forever), respects prefers-reduced-motion (exactly one animation frame requested, not repeated), and cleans up its resize listener on unmount. Full suite after change: npm run test -> 19 files, 116 passed (up from 103 before this session). npm run build -> 619 modules, clean. npm run lint -> caught and fixed one real issue (unused STAR_COUNT constant left over from an earlier draft, superseded by per-layer counts) before landing at 0 warnings/0 errors, 49 files. Backend re-confirmed unaffected: pytest -q -> 118 passed, 1 skipped (unchanged).",
+      "priority": "P1",
+      "layer": "frontend",
+      "depends_on": []
+    },
+    {
+      "id": "FE023",
+      "name": "Node/edge/background personalization (theme customizer)",
+      "behavior": "A settings panel letting users personalize: node appearance (color palette presets, glow intensity, shape defaults - extends the existing per-node color/shape/size fields from NodeForm), edge style (solid / dashed / animated 'comet trail' matching the orbit theme), and background (starfield density, nebula tint). Persisted per-user (localStorage at minimum; a backend user-preferences endpoint is a possible future extension, not required for v1).",
+      "verification": "cd frontend && npm run test -- src/components/ThemeCustomizer.test.jsx",
+      "state": "not_started",
+      "evidence": "Planned 2026-08-25. Not yet implemented. Builds on FE022's design tokens and extends FE009/FE010 (NodeForm/EdgeForm) which already expose per-item color/shape/size/style fields - this feature is the theme layer on top, not a new data model.",
+      "priority": "P1",
+      "layer": "frontend",
+      "depends_on": [
+        {
+          "id": "FE022",
+          "layer": "frontend"
+        },
+        {
+          "id": "FE009",
+          "layer": "frontend"
+        },
+        {
+          "id": "FE010",
+          "layer": "frontend"
+        }
+      ]
+    },
+    {
+      "id": "FE024",
+      "name": "Marketing pages redesign: About / How it works / Example (mock)",
+      "behavior": "Redesign the public-facing pages (extends/replaces FE001 Landing page) into a Universum-Labs-style narrative: project vision, a 'How it works' numbered-steps section (mirroring Universum Labs' Login -> Dashboard -> Graph exploration pattern, adapted to braintodo's actual flow), and a fully interactive Example section built entirely on mock data - this is the ONLY place mock/demo data is shown publicly. Universe-themed per FE022.",
+      "verification": "cd frontend && npm run test -- src/pages/LandingPage.test.jsx",
+      "state": "not_started",
+      "evidence": "Planned 2026-08-25, structure modeled on universumlabs.com's page flow (Vision / Platform / Who it serves / How it works, gated app behind login with demo content on the public site). Not yet implemented.",
+      "priority": "P1",
+      "layer": "frontend",
+      "depends_on": [
+        {
+          "id": "FE022",
+          "layer": "frontend"
+        },
+        {
+          "id": "FE001",
+          "layer": "frontend"
+        },
+        {
+          "id": "FE013",
+          "layer": "frontend"
+        }
+      ]
+    },
+    {
+      "id": "FE025",
+      "name": "3D graph view with 2D/3D toggle button",
+      "behavior": "A WebGL/three.js-rendered 3D force-directed graph view (client-side layout, same data shape as the existing 2D GraphCanvas), with a single toggle button in TopBar switching between the existing 2D GraphCanvas (FE008) and the new 3D view. Orbit-style camera controls (drag to rotate, scroll to zoom) matching the universe theme (FE022). No backend change required - 3D positions are computed client-side from the same /nodes and /edges data the 2D view already consumes (see F023 for the optional persistence extension).",
+      "verification": "cd frontend && npm run test -- src/components/GraphCanvas3D.test.jsx",
+      "state": "not_started",
+      "evidence": "Planned 2026-08-25 based on the node-scape.vercel.app 3D knowledge graph reference (three.js/WebGL force-directed layout, orbit camera, filter/label toggle affordances) and similar 3D graph demos surveyed alongside it (ml-knowledge-graph.vercel.app: category/level filters, node-label and connection toggles). Not yet implemented.",
+      "priority": "P1",
+      "layer": "frontend",
+      "depends_on": [
+        {
+          "id": "FE008",
+          "layer": "frontend"
+        },
+        {
+          "id": "FE022",
+          "layer": "frontend"
+        }
+      ]
+    },
+    {
+      "id": "FE026",
+      "name": "Gate authenticated app to live data only; mock lives exclusively on marketing pages",
+      "behavior": "Once a user is logged into the actual app (AppPage), the app should default to and likely only offer 'live' data - the Mock/Live toggle currently in TopBar either gets removed from the authenticated app entirely or is dev-only/hidden in production, since the mock demo experience now has its own dedicated home in FE024's Example section for anonymous visitors. Prevents a logged-in user from ever seeing placeholder demo data inside their real project.",
+      "verification": "cd frontend && npm run test -- src/pages/AppPage.test.jsx",
+      "state": "not_started",
+      "evidence": "Planned 2026-08-25, addressing the requirement 'access into project, dont show the mock example (that has been in the main/introducing pages)'. Not yet implemented - depends on FE024 existing first, since removing mock from the authenticated app only makes sense once the marketing pages have their own mock-backed Example section to replace it.",
+      "priority": "P2",
+      "layer": "frontend",
+      "depends_on": [
+        {
+          "id": "FE006",
+          "layer": "frontend"
+        },
+        {
+          "id": "FE007",
+          "layer": "frontend"
+        },
+        {
+          "id": "FE024",
+          "layer": "frontend"
+        }
+      ]
+    }
+  ]
+}

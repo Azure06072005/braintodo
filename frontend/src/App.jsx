@@ -5,10 +5,12 @@ import RegisterPage from "./pages/RegisterPage";
 import AppPage from "./pages/AppPage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import { I18nProvider } from "./i18n/I18nContext";
+import Starfield from "./components/Starfield";
 
 export default function App() {
   return (
     <I18nProvider>
+      <Starfield />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<LandingPage />} />
