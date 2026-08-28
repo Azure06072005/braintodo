@@ -279,7 +279,7 @@ export default function GraphCanvas({
   return (
     <svg
       ref={svgRef}
-      style={{ width: "100%", height: "100%", display: "block", background: theme.canvasBg }}
+      style={{ width: "100%", height: "100%", display: "block", background: "transparent" }}
     />
   );
 }

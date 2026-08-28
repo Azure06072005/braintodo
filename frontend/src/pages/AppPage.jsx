@@ -119,7 +119,7 @@ export default function AppPage() {
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+    <div style={{ display: "flex", flexDirection: "column", height: "100vh", position: "relative", zIndex: 1, overflow: "hidden" }}>
       <TopBar
         source={source}
         onSourceChange={setSource}
@@ -139,7 +139,7 @@ export default function AppPage() {
         extraActions={<ImportExportControls onExport={exportGraph} onImport={importGraph} />}
       />
 
-      <div style={{ padding: "10px 16px", borderBottom: `1px solid ${theme.panelBorder}` }}>
+      <div style={{ padding: "10px 16px", borderBottom: `1px solid ${theme.panelBorder}`, background: "rgba(13, 16, 32, 0.4)", backdropFilter: "blur(6px)" }}>
         <SearchBar
           onSearch={handleSearch}
           onClear={() => setSearchResult(null)}

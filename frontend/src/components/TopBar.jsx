@@ -133,9 +133,11 @@ const styles = {
     display: "flex",
     alignItems: "center",
     padding: "10px 16px",
-    background: theme.panelBg,
+    background: "rgba(13, 16, 32, 0.85)",
+    backdropFilter: "blur(10px)",
     borderBottom: `1px solid ${theme.panelBorder}`,
     flexShrink: 0,
+    zIndex: 10,
   },
   toggleGroup: {
     display: "flex",
