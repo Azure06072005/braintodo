@@ -80,6 +80,26 @@ describe("GraphCanvas", () => {
     expect(paths.length).toBeGreaterThanOrEqual(1);
   });
 
+  it("uses the backend's semantic cluster label when present, instead of the numeric fallback", () => {
+    const clusters = [
+      { cluster_id: 0, node_ids: ["n1", "n2"], label: "Auth flow" },
+      { cluster_id: 1, node_ids: ["n3"], label: null },
+    ];
+    const { container } = render(
+      <GraphCanvas
+        nodes={testNodes}
+        edges={testEdges}
+        clusters={clusters}
+        onNodeClick={vi.fn()}
+      />
+    );
+
+    const hullLabels = Array.from(container.querySelectorAll("text")).map((t) => t.textContent);
+    expect(hullLabels).toContain("Auth flow");
+    expect(hullLabels).toContain("Cụm 1");
+    expect(hullLabels).not.toContain("Cụm 0");
+  });
+
   it("renders cleanly with empty nodes and edges arrays", () => {
     const { container } = render(
       <GraphCanvas nodes={[]} edges={[]} onNodeClick={vi.fn()} />

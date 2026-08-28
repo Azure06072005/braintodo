@@ -71,7 +71,7 @@ export default function GraphCanvas({
       .selectAll("text")
       .data(clusters || [], (d) => d.cluster_id)
       .join("text")
-      .text((d) => `Cụm ${d.cluster_id}`)
+      .text((d) => d.label || `Cụm ${d.cluster_id}`)
       .attr("fill", (d) => theme.clusterPalette[d.cluster_id % theme.clusterPalette.length])
       .style("font-size", "10.5px")
       .style("font-weight", 600)
