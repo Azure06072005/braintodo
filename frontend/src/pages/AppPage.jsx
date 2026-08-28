@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, lazy, useEffect, useMemo, useState } from "react";
 import TopBar from "../components/TopBar";
 import GraphCanvas from "../components/GraphCanvas";
 import NodeDetailPanel from "../components/NodeDetailPanel";
@@ -12,10 +12,17 @@ import { useAuth } from "../hooks/useAuth";
 import { useTranslation } from "../i18n/useTranslation";
 import { theme } from "../theme";
 
+// Lazy-loaded: three.js is a heavy dependency (~500kB minified) that most
+// users won't need if they never switch to the 3D view. Splitting it into
+// its own chunk keeps the main bundle small for the common case (2D-only
+// usage) and only downloads three.js the first time someone clicks "3D".
+const GraphCanvas3D = lazy(() => import("../components/GraphCanvas3D"));
+
 export default function AppPage() {
   const { token } = useAuth();
   const { t } = useTranslation();
   const [source, setSource] = useState("mock");
+  const [viewMode, setViewMode] = useState("2d"); // "2d" | "3d" (FE025)
   const [selectedNodeId, setSelectedNodeId] = useState(null);
   const [modal, setModal] = useState(null);
   const [searchResult, setSearchResult] = useState(null);
@@ -127,6 +134,8 @@ export default function AppPage() {
         clusterOverlayEnabled={clusterOverlayEnabled}
         onToggleClusterOverlay={() => setClusterOverlayEnabled((v) => !v)}
         onTogglePanel={() => setPanelOpen((v) => !v)}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
         extraActions={<ImportExportControls onExport={exportGraph} onImport={importGraph} />}
       />
 
@@ -142,16 +151,43 @@ export default function AppPage() {
 
       <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
         <div style={{ flex: 1, position: "relative" }}>
-          <GraphCanvas
-            nodes={nodes}
-            edges={edges}
-            onNodeClick={handleNodeClickOnCanvas}
-            selectedNodeId={selectedNodeId}
-            highlightNodeIds={highlightNodeIds}
-            matchNodeIds={matchNodeIds}
-            topology={topology}
-            clusters={clusterOverlayEnabled ? clusters : null}
-          />
+          {viewMode === "3d" ? (
+            <Suspense
+              fallback={
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    height: "100%",
+                    color: theme.textMuted,
+                    fontSize: 13,
+                  }}
+                >
+                  {t("common.loading")}
+                </div>
+              }
+            >
+              <GraphCanvas3D
+                nodes={nodes}
+                edges={edges}
+                onNodeClick={handleNodeClickOnCanvas}
+                selectedNodeId={selectedNodeId}
+                clusters={clusterOverlayEnabled ? clusters : null}
+              />
+            </Suspense>
+          ) : (
+            <GraphCanvas
+              nodes={nodes}
+              edges={edges}
+              onNodeClick={handleNodeClickOnCanvas}
+              selectedNodeId={selectedNodeId}
+              highlightNodeIds={highlightNodeIds}
+              matchNodeIds={matchNodeIds}
+              topology={topology}
+              clusters={clusterOverlayEnabled ? clusters : null}
+            />
+          )}
         </div>
 
         <NodeDetailPanel

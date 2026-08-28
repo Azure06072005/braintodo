@@ -16,7 +16,9 @@
     "status_disconnected": "○ Disconnected",
     "status_error": "● Connection error",
     "api_error": "Could not reach the live API ({{error}}) — using sample data",
-    "language_label": "Language"
+    "language_label": "Language",
+    "view_2d": "2D",
+    "view_3d": "3D"
   },
   "topology": {
     "compute_failed": "Could not compute topology: {{error}}"

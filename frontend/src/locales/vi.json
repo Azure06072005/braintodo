@@ -16,7 +16,9 @@
     "status_disconnected": "○ Mất kết nối",
     "status_error": "● Lỗi kết nối",
     "api_error": "Không nối được API thật ({{error}}) — đang dùng dữ liệu mẫu",
-    "language_label": "Ngôn ngữ"
+    "language_label": "Ngôn ngữ",
+    "view_2d": "2D",
+    "view_3d": "3D"
   },
   "topology": {
     "compute_failed": "Không tính được topology: {{error}}"
