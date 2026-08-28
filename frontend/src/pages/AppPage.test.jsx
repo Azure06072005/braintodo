@@ -195,4 +195,25 @@ describe("AppPage", () => {
     });
     expect(alertSpy).not.toHaveBeenCalledWith(expect.stringMatching(/không tính được topology/i));
   });
+
+  it("toggling to 3D swaps GraphCanvas for GraphCanvas3D, and back again", async () => {
+    const user = userEvent.setup();
+    render(<AppPage />);
+    await waitFor(() => screen.getByTestId("node-count"));
+
+    expect(screen.getByTestId("graph-canvas-stub")).toBeInTheDocument();
+    expect(screen.queryByTestId("graph-canvas-3d")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "3D" }));
+
+    expect(screen.queryByTestId("graph-canvas-stub")).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByTestId("graph-canvas-3d")).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole("button", { name: "2D" }));
+
+    expect(screen.getByTestId("graph-canvas-stub")).toBeInTheDocument();
+    expect(screen.queryByTestId("graph-canvas-3d")).not.toBeInTheDocument();
+  });
 });

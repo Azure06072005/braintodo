@@ -15,6 +15,8 @@ export default function TopBar({
   clusterOverlayEnabled,
   onToggleClusterOverlay,
   onTogglePanel,
+  viewMode,
+  onViewModeChange,
   extraActions,
 }) {
   const { t, locale, setLocale, supportedLocales } = useTranslation();
@@ -72,6 +74,25 @@ export default function TopBar({
         )}
 
         {extraActions}
+
+        {viewMode && onViewModeChange && (
+          <div style={styles.toggleGroup}>
+            <button
+              className="bt-btn"
+              onClick={() => onViewModeChange("2d")}
+              style={viewMode === "2d" ? styles.toggleActive : styles.toggle}
+            >
+              {t("topbar.view_2d")}
+            </button>
+            <button
+              className="bt-btn"
+              onClick={() => onViewModeChange("3d")}
+              style={viewMode === "3d" ? styles.toggleActive : styles.toggle}
+            >
+              {t("topbar.view_3d")}
+            </button>
+          </div>
+        )}
 
         <select
           aria-label={t("topbar.language_label")}

@@ -16,7 +16,9 @@
     "status_disconnected": "○ 切断",
     "status_error": "● 接続エラー",
     "api_error": "本番APIに接続できません ({{error}}) — サンプルデータを使用中",
-    "language_label": "言語"
+    "language_label": "言語",
+    "view_2d": "2D",
+    "view_3d": "3D"
   },
   "topology": {
     "compute_failed": "トポロジーを計算できませんでした: {{error}}"

@@ -227,8 +227,8 @@
       "name": "3D graph view with 2D/3D toggle button",
       "behavior": "A WebGL/three.js-rendered 3D force-directed graph view (client-side layout, same data shape as the existing 2D GraphCanvas), with a single toggle button in TopBar switching between the existing 2D GraphCanvas (FE008) and the new 3D view. Orbit-style camera controls (drag to rotate, scroll to zoom) matching the universe theme (FE022). No backend change required - 3D positions are computed client-side from the same /nodes and /edges data the 2D view already consumes (see F023 for the optional persistence extension).",
       "verification": "cd frontend && npm run test -- src/components/GraphCanvas3D.test.jsx",
-      "state": "not_started",
-      "evidence": "Planned 2026-08-25 based on the node-scape.vercel.app 3D knowledge graph reference (three.js/WebGL force-directed layout, orbit camera, filter/label toggle affordances) and similar 3D graph demos surveyed alongside it (ml-knowledge-graph.vercel.app: category/level filters, node-label and connection toggles). Not yet implemented.",
+      "state": "passing",
+      "evidence": "2026-08-28. Implemented computeLayout() in src/graph3d/computeLayout.js (deterministic 3D force simulation using seededRandom, 200 iterations, pairwise repulsion + spring attraction + centering + damping). Implemented GraphCanvas3D.jsx (Three.js WebGL scene, OrbitControls with damping, glowing sphere node meshes, line segment edge meshes, selected node wireframe ring, pointer click-vs-drag distinction with raycaster hit-testing, safe null-WebGL jsdom fallback, and comprehensive geometry/material disposal on unmount). Lazy-loaded via React.lazy/Suspense in AppPage.jsx (main bundle 341.67 kB, GraphCanvas3D on-demand chunk 543.74 kB). TopBar gained 2D/3D toggle with full i18n support across vi/en/ja (view_2d/view_3d keys). Tests: computeLayout.test.js (7 tests), GraphCanvas3D.test.jsx (6 tests), AppPage.test.jsx 2D/3D toggle (1 test). Full suite: 21 files, 131 passed, build clean (624 modules), lint clean (0 errors/0 warnings on 53 files).",
       "priority": "P1",
       "layer": "frontend",
       "depends_on": [
