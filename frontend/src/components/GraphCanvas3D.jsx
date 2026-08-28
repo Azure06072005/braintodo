@@ -56,7 +56,7 @@ export default function GraphCanvas3D({ nodes, edges, onNodeClick, selectedNodeI
 
     let renderer;
     try {
-      renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
     } catch {
       // No WebGL context available (e.g. jsdom in tests, or a browser with
       // WebGL disabled) - render just the empty container rather than
@@ -71,7 +71,6 @@ export default function GraphCanvas3D({ nodes, edges, onNodeClick, selectedNodeI
     }
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(theme.canvasBg);
 
     const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 2000);
     camera.position.set(0, 0, 30);
