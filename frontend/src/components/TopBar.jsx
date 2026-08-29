@@ -1,5 +1,6 @@
 import { theme } from "../theme";
 import { useTranslation } from "../i18n/useTranslation";
+import { IS_DEV } from "../config/env";
 
 export default function TopBar({
   source,
@@ -107,22 +108,30 @@ export default function TopBar({
           ))}
         </select>
 
-        <div style={styles.toggleGroup}>
-          <button
-            className="bt-btn"
-            onClick={() => onSourceChange("mock")}
-            style={source === "mock" ? styles.toggleActive : styles.toggle}
-          >
-            {t("topbar.source_mock")}
-          </button>
-          <button
-            className="bt-btn"
-            onClick={() => onSourceChange("live")}
-            style={source === "live" ? styles.toggleActive : styles.toggle}
-          >
-            {t("topbar.source_live")}
-          </button>
-        </div>
+        {/* FE026: the Mock/Live toggle is a dev-only affordance in
+            production - the mock demo now lives on the public marketing
+            pages (FE024's Example section), and a real logged-in user
+            should never be able to switch their actual project view to
+            placeholder data. Still rendered in dev builds (IS_DEV) so
+            local development/testing doesn't require a live backend. */}
+        {IS_DEV && (
+          <div style={styles.toggleGroup}>
+            <button
+              className="bt-btn"
+              onClick={() => onSourceChange("mock")}
+              style={source === "mock" ? styles.toggleActive : styles.toggle}
+            >
+              {t("topbar.source_mock")}
+            </button>
+            <button
+              className="bt-btn"
+              onClick={() => onSourceChange("live")}
+              style={source === "live" ? styles.toggleActive : styles.toggle}
+            >
+              {t("topbar.source_live")}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

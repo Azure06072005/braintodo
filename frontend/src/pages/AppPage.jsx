@@ -11,6 +11,7 @@ import { useGraphData } from "../hooks/useGraphData";
 import { useAuth } from "../hooks/useAuth";
 import { useTranslation } from "../i18n/useTranslation";
 import { theme } from "../theme";
+import { IS_DEV } from "../config/env";
 
 // Lazy-loaded: three.js is a heavy dependency (~500kB minified) that most
 // users won't need if they never switch to the 3D view. Splitting it into
@@ -21,7 +22,12 @@ const GraphCanvas3D = lazy(() => import("../components/GraphCanvas3D"));
 export default function AppPage() {
   const { token } = useAuth();
   const { t } = useTranslation();
-  const [source, setSource] = useState("mock");
+  // FE026: the authenticated app defaults to live data in production - the
+  // mock demo now has its own dedicated home on the public marketing pages
+  // (FE024's Example section). "mock" stays the default in dev builds
+  // (IS_DEV) purely so local development/testing doesn't require a live
+  // backend running - see TopBar.jsx for the matching toggle visibility.
+  const [source, setSource] = useState(IS_DEV ? "mock" : "live");
   const [viewMode, setViewMode] = useState("2d"); // "2d" | "3d" (FE025)
   const [selectedNodeId, setSelectedNodeId] = useState(null);
   const [modal, setModal] = useState(null);
