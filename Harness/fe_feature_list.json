@@ -246,9 +246,9 @@
       "id": "FE026",
       "name": "Gate authenticated app to live data only; mock lives exclusively on marketing pages",
       "behavior": "Once a user is logged into the actual app (AppPage), the app should default to and likely only offer 'live' data - the Mock/Live toggle currently in TopBar either gets removed from the authenticated app entirely or is dev-only/hidden in production, since the mock demo experience now has its own dedicated home in FE024's Example section for anonymous visitors. Prevents a logged-in user from ever seeing placeholder demo data inside their real project.",
-      "verification": "cd frontend && npm run test -- src/pages/AppPage.test.jsx",
-      "state": "not_started",
-      "evidence": "Planned 2026-08-25, addressing the requirement 'access into project, dont show the mock example (that has been in the main/introducing pages)'. Not yet implemented - depends on FE024 existing first, since removing mock from the authenticated app only makes sense once the marketing pages have their own mock-backed Example section to replace it.",
+      "verification": "cd frontend && npm run test -- src/pages/AppPage.production.test.jsx src/components/TopBar.production.test.jsx",
+      "state": "passing",
+      "evidence": "2026-08-29. Created src/config/env.js exporting IS_DEV (import.meta.env.DEV) to centralize dev vs prod environment mode reads. AppPage defaults source to IS_DEV ? 'mock' : 'live' so production users immediately access live project data while dev/test workflows remain hermetic without requiring a live backend. TopBar gates the Mock/Live toggle behind {IS_DEV && (...)} hiding it from production builds. Unit tests: env.test.js (1 test), TopBar.production.test.jsx (2 tests verifying absence of Mock/Live buttons and presence of standard controls under IS_DEV=false mock), AppPage.production.test.jsx (1 test verifying default live fetch and graceful fallback under IS_DEV=false mock). Full suite: 24 files, 140 passed, build clean (625 modules), lint clean.",
       "priority": "P2",
       "layer": "frontend",
       "depends_on": [
