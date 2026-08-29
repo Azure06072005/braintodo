@@ -203,8 +203,8 @@
       "name": "Marketing pages redesign: About / How it works / Example (mock)",
       "behavior": "Redesign the public-facing pages (extends/replaces FE001 Landing page) into a Universum-Labs-style narrative: project vision, a 'How it works' numbered-steps section (mirroring Universum Labs' Login -> Dashboard -> Graph exploration pattern, adapted to braintodo's actual flow), and a fully interactive Example section built entirely on mock data - this is the ONLY place mock/demo data is shown publicly. Universe-themed per FE022.",
       "verification": "cd frontend && npm run test -- src/pages/LandingPage.test.jsx",
-      "state": "not_started",
-      "evidence": "Planned 2026-08-25, structure modeled on universumlabs.com's page flow (Vision / Platform / Who it serves / How it works, gated app behind login with demo content on the public site). Not yet implemented.",
+      "state": "passing",
+      "evidence": "2026-08-29. Redesigned LandingPage.jsx following Universum-Labs-style narrative: Hero section (backward compatible heading + CTAs to /app and /login), Vision section (3 feature cards: Graph vs List, GNN link suggestions, Leiden auto-clustering), How it works section (4 numbered steps), interactive mock-data Example section (live GraphCanvas with interactive node selection and node detail preview panel), and final CTA to /register. LandingPage.test.jsx covers hero links, vision feature cards, numbered steps, interactive mock canvas, node click preview updates, and register CTA (7 tests, 100% passing). Full suite: 21 files, 136 passed, build clean (624 modules), lint clean.",
       "priority": "P1",
       "layer": "frontend",
       "depends_on": [
