@@ -57,4 +57,13 @@ describe("TopBar i18n", () => {
     expect(screen.getByText(/timeout/)).toBeInTheDocument();
     expect(screen.getByText(/Không nối được API thật/)).toBeInTheDocument();
   });
+
+  it("calls onOpenPersonalization when the personalization button is clicked", async () => {
+    const user = userEvent.setup();
+    let opened = false;
+    renderTopBar({ onOpenPersonalization: () => { opened = true; } });
+    const btn = screen.getByRole("button", { name: "Cá nhân hoá giao diện" });
+    await user.click(btn);
+    expect(opened).toBe(true);
+  });
 });

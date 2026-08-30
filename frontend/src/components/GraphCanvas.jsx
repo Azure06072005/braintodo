@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import * as d3 from "d3";
 import { theme } from "../theme";
+import { usePersonalization } from "../personalization/usePersonalization";
 
 export default function GraphCanvas({
   nodes,
@@ -14,6 +15,9 @@ export default function GraphCanvas({
 }) {
   const svgRef = useRef(null);
   const simRef = useRef(null);
+  const { settings } = usePersonalization();
+  const glowIntensity = settings?.glowIntensity ?? 0;
+  const showCometTrail = settings?.showCometTrail ?? true;
 
   useEffect(() => {
     const svg = d3.select(svgRef.current);
@@ -94,7 +98,7 @@ export default function GraphCanvas({
       .join("circle")
       .attr("r", 2.5)
       .attr("fill", theme.pulse)
-      .attr("opacity", 0.85);
+      .attr("opacity", showCometTrail ? 0.85 : 0);
 
     const nodeSel = zoomLayer
       .append("g")
@@ -156,7 +160,12 @@ export default function GraphCanvas({
           ? 2.5
           : 2
       )
-      .attr("opacity", (d) => (highlightNodeIds && !highlightNodeIds.has(d.id) ? 0.25 : 1));
+      .attr("opacity", (d) => (highlightNodeIds && !highlightNodeIds.has(d.id) ? 0.25 : 1))
+      .style("filter", (d) =>
+        glowIntensity > 0
+          ? `drop-shadow(${theme.glow(d.color || theme.accent, 3 + glowIntensity * 14)})`
+          : null
+      );
 
     if (topology) {
       nodeSel.append("title").text((d) => {
@@ -274,7 +283,18 @@ export default function GraphCanvas({
       simulation.stop();
       timer.stop();
     };
-  }, [nodes, edges, onNodeClick, selectedNodeId, highlightNodeIds, matchNodeIds, topology, clusters]);
+  }, [
+    nodes,
+    edges,
+    onNodeClick,
+    selectedNodeId,
+    highlightNodeIds,
+    matchNodeIds,
+    topology,
+    clusters,
+    glowIntensity,
+    showCometTrail,
+  ]);
 
   return (
     <svg

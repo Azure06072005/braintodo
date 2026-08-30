@@ -3,6 +3,7 @@ import TopBar from "../components/TopBar";
 import GraphCanvas from "../components/GraphCanvas";
 import NodeDetailPanel from "../components/NodeDetailPanel";
 import Modal from "../components/Modal";
+import PersonalizationPanel from "../components/PersonalizationPanel";
 import NodeForm from "../components/NodeForm";
 import EdgeForm from "../components/EdgeForm";
 import SearchBar from "../components/SearchBar";
@@ -142,6 +143,7 @@ export default function AppPage() {
         onTogglePanel={() => setPanelOpen((v) => !v)}
         viewMode={viewMode}
         onViewModeChange={setViewMode}
+        onOpenPersonalization={() => setModal({ type: "personalization" })}
         extraActions={<ImportExportControls onExport={exportGraph} onImport={importGraph} />}
       />
 
@@ -208,6 +210,12 @@ export default function AppPage() {
           onClosePanel={() => setPanelOpen(false)}
         />
       </div>
+
+      {modal?.type === "personalization" && (
+        <Modal title="Cá nhân hoá giao diện" onClose={() => setModal(null)}>
+          <PersonalizationPanel />
+        </Modal>
+      )}
 
       {modal?.type === "create-node" && (
         <Modal title="Tạo ý tưởng mới" onClose={() => setModal(null)}>
