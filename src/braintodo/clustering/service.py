@@ -1,5 +1,11 @@
-import igraph as ig
-import leidenalg as la
+try:
+    import igraph as ig
+    import leidenalg as la
+    _HAS_LEIDEN = True
+except ImportError:
+    ig = None  # type: ignore
+    la = None  # type: ignore
+    _HAS_LEIDEN = False
 
 from braintodo.graph.base import GraphStore
 from braintodo.models.cluster import Cluster
@@ -66,6 +72,15 @@ class ClusterService:
 
         nodes_by_id = {n.id: n for n in nodes}
         node_ids = list(nodes_by_id.keys())
+
+        if not _HAS_LEIDEN or ig is None or la is None:
+            return [
+                Cluster(
+                    cluster_id=0,
+                    node_ids=sorted(node_ids),
+                    label=nodes[0].title if nodes else None,
+                )
+            ]
 
         graph = ig.Graph()
         graph.add_vertices(node_ids)
