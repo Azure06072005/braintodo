@@ -18,6 +18,7 @@ export default function TopBar({
   onTogglePanel,
   viewMode,
   onViewModeChange,
+  onOpenPersonalization,
   extraActions,
 }) {
   const { t, locale, setLocale, supportedLocales } = useTranslation();
@@ -107,6 +108,17 @@ export default function TopBar({
             </option>
           ))}
         </select>
+
+        {onOpenPersonalization && (
+          <button
+            className="bt-btn"
+            onClick={onOpenPersonalization}
+            aria-label="Cá nhân hoá giao diện"
+            style={styles.newBtn}
+          >
+            🎨
+          </button>
+        )}
 
         {/* FE026: the Mock/Live toggle is a dev-only affordance in
             production - the mock demo now lives on the public marketing

@@ -5,21 +5,24 @@ import RegisterPage from "./pages/RegisterPage";
 import AppPage from "./pages/AppPage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import { I18nProvider } from "./i18n/I18nContext";
+import { PersonalizationProvider } from "./personalization/PersonalizationContext";
 import Starfield from "./components/Starfield";
 
 export default function App() {
   return (
     <I18nProvider>
-      <Starfield />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route path="/app" element={<AppPage />} />
-          <Route path="/verify-email" element={<VerifyEmailPage />} />
-        </Routes>
-      </BrowserRouter>
+      <PersonalizationProvider>
+        <Starfield />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/app" element={<AppPage />} />
+            <Route path="/verify-email" element={<VerifyEmailPage />} />
+          </Routes>
+        </BrowserRouter>
+      </PersonalizationProvider>
     </I18nProvider>
   );
 }
