@@ -47,5 +47,19 @@
     "submit_create": "Tạo ý tưởng",
     "submit_edit": "Lưu thay đổi",
     "cancel": "Huỷ"
+  },
+  "edge_form": {
+    "from_node_label": "Từ node",
+    "to_node_label": "Đến node",
+    "relation_type_label": "Loại quan hệ (relation_type)",
+    "relation_type_placeholder": "expands, part_of, conflicts_with...",
+    "line_style_label": "Kiểu nét vẽ",
+    "line_style_solid": "solid",
+    "line_style_dashed": "dashed",
+    "same_node_error": "Node nguồn và node đích phải khác nhau",
+    "not_enough_nodes": "Cần ít nhất 2 node để tạo liên kết. Hãy tạo thêm node trước.",
+    "saving": "Đang lưu…",
+    "submit_create": "Tạo liên kết",
+    "cancel": "Huỷ"
   }
 }

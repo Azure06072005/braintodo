@@ -47,5 +47,19 @@
     "submit_create": "アイデアを作成",
     "submit_edit": "変更を保存",
     "cancel": "キャンセル"
+  },
+  "edge_form": {
+    "from_node_label": "起点ノード",
+    "to_node_label": "終点ノード",
+    "relation_type_label": "関係の種類 (relation_type)",
+    "relation_type_placeholder": "expands, part_of, conflicts_with...",
+    "line_style_label": "線のスタイル",
+    "line_style_solid": "solid",
+    "line_style_dashed": "dashed",
+    "same_node_error": "起点と終点のノードは異なる必要があります",
+    "not_enough_nodes": "リンクを作成するには2つ以上のノードが必要です。先にノードを作成してください。",
+    "saving": "保存中…",
+    "submit_create": "リンクを作成",
+    "cancel": "キャンセル"
   }
 }

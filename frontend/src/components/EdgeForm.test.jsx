@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import EdgeForm from "./EdgeForm";
+import { I18nProvider } from "../i18n/I18nContext";
 
 const nodes = [
   { id: "n1", title: "Node One" },
@@ -74,5 +75,18 @@ describe("EdgeForm", () => {
 
     expect(onCancel).toHaveBeenCalledTimes(1);
     expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("renders in English when mounted under an I18nProvider set to 'en'", () => {
+    localStorage.setItem("bt-locale", "en");
+    render(
+      <I18nProvider>
+        <EdgeForm nodes={nodes} defaultSourceId="n1" onSubmit={vi.fn()} onCancel={vi.fn()} />
+      </I18nProvider>
+    );
+    expect(screen.getByLabelText(/from node/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Create link" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
+    localStorage.removeItem("bt-locale");
   });
 });

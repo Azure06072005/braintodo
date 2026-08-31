@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { theme } from "../theme";
+import { useTranslation } from "../i18n/useTranslation";
 
 export default function EdgeForm({ nodes, defaultSourceId, onSubmit, onCancel }) {
+  const { t } = useTranslation();
   const initialSourceId = defaultSourceId || nodes[0]?.id || "";
   const [sourceId, setSourceId] = useState(initialSourceId);
   const [targetId, setTargetId] = useState(
@@ -15,7 +17,7 @@ export default function EdgeForm({ nodes, defaultSourceId, onSubmit, onCancel })
   async function handleSubmit(e) {
     e.preventDefault();
     if (sourceId === targetId) {
-      setError("Node nguồn và node đích phải khác nhau");
+      setError(t("edge_form.same_node_error"));
       return;
     }
     setSubmitting(true);
@@ -37,14 +39,14 @@ export default function EdgeForm({ nodes, defaultSourceId, onSubmit, onCancel })
   if (nodes.length < 2) {
     return (
       <p style={{ color: theme.textMuted, fontSize: 13 }}>
-        Cần ít nhất 2 node để tạo liên kết. Hãy tạo thêm node trước.
+        {t("edge_form.not_enough_nodes")}
       </p>
     );
   }
 
   return (
     <form onSubmit={handleSubmit}>
-      <Field label="Từ node">
+      <Field label={t("edge_form.from_node_label")}>
         <select style={styles.input} value={sourceId} onChange={(e) => setSourceId(e.target.value)}>
           {nodes.map((n) => (
             <option key={n.id} value={n.id}>
@@ -54,7 +56,7 @@ export default function EdgeForm({ nodes, defaultSourceId, onSubmit, onCancel })
         </select>
       </Field>
 
-      <Field label="Đến node">
+      <Field label={t("edge_form.to_node_label")}>
         <select style={styles.input} value={targetId} onChange={(e) => setTargetId(e.target.value)}>
           {nodes.map((n) => (
             <option key={n.id} value={n.id}>
@@ -64,19 +66,19 @@ export default function EdgeForm({ nodes, defaultSourceId, onSubmit, onCancel })
         </select>
       </Field>
 
-      <Field label="Loại quan hệ (relation_type)">
+      <Field label={t("edge_form.relation_type_label")}>
         <input
           style={styles.input}
           value={relationType}
           onChange={(e) => setRelationType(e.target.value)}
-          placeholder="expands, part_of, conflicts_with..."
+          placeholder={t("edge_form.relation_type_placeholder")}
         />
       </Field>
 
-      <Field label="Kiểu nét vẽ">
+      <Field label={t("edge_form.line_style_label")}>
         <select style={styles.input} value={style} onChange={(e) => setStyle(e.target.value)}>
-          <option value="solid">solid</option>
-          <option value="dashed">dashed</option>
+          <option value="solid">{t("edge_form.line_style_solid")}</option>
+          <option value="dashed">{t("edge_form.line_style_dashed")}</option>
         </select>
       </Field>
 
@@ -84,10 +86,10 @@ export default function EdgeForm({ nodes, defaultSourceId, onSubmit, onCancel })
 
       <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
         <button type="submit" disabled={submitting} style={styles.primaryBtn}>
-          {submitting ? "Đang lưu…" : "Tạo liên kết"}
+          {submitting ? t("edge_form.saving") : t("edge_form.submit_create")}
         </button>
         <button type="button" onClick={onCancel} style={styles.secondaryBtn}>
-          Huỷ
+          {t("edge_form.cancel")}
         </button>
       </div>
     </form>

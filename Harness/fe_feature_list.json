@@ -265,6 +265,26 @@
           "layer": "frontend"
         }
       ]
+    },
+    {
+      "id": "FE027",
+      "name": "EdgeForm i18n migration",
+      "behavior": "EdgeForm.jsx migrated off hardcoded Vietnamese strings (from_node_label, to_node_label, relation_type_label, relation_type_placeholder, line_style_label, line_style_solid, line_style_dashed, same_node_error, not_enough_nodes, saving, submit_create, cancel) to t(...) calls under a new 'edge_form' locale namespace in all 3 locale files (vi/en/ja). Continues the FE019/FE020/FE021 i18n migration plan.",
+      "verification": "cd frontend && npm run test -- src/components/EdgeForm.test.jsx",
+      "state": "passing",
+      "evidence": "2026-08-31. Added 'edge_form' namespace across vi.json, en.json, and ja.json. Replaced hardcoded text in EdgeForm.jsx with t('edge_form.*') calls. Added an English rendering test in EdgeForm.test.jsx. Full test suite: 27 files, 156 passed, build clean (631 modules), lint clean (0 warnings, 0 errors).",
+      "priority": "P2",
+      "layer": "frontend",
+      "depends_on": [
+        {
+          "id": "FE019",
+          "layer": "frontend"
+        },
+        {
+          "id": "FE020",
+          "layer": "frontend"
+        }
+      ]
     }
   ]
 }
