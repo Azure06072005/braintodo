@@ -1,5 +1,31 @@
 # Design Decisions — braintodo
 
+## 2026-09-01: F024 — Task fields added to Node with no Postgres migration
+- Reason: `AGENTS.md`/`Architecture.md` describe a two-store split (Neo4j
+  structure, Postgres relational/auth), which suggested a migration might be
+  needed. Checked `src/braintodo/db/models.py` directly before writing any
+  code: Postgres only holds `User`/`EmailVerificationToken`. `Node` has no
+  Postgres table at all - it's persisted entirely by whichever `GraphStore`
+  is active (`Neo4jGraphStore` in production, `InMemoryGraphStore` in
+  tests), and both call `node.model_dump()` generically rather than
+  enumerating fields. So adding `node_type`/`due_date`/`priority`/
+  `completed_at`/`recurrence_rule` to the `Node`/`NodeCreate`/`NodeUpdate`
+  Pydantic models was sufficient - no `alembic revision` needed.
+- Caveat (not yet exercised): Neo4j's Cypher driver silently omits
+  null-valued properties from a `CREATE (n $props)` / `SET n += $updates`
+  map rather than erroring, so `due_date: null` on an idea-node create
+  should just not set the property. This matches existing precedent
+  (`embedding`/`graph_embedding` are already nullable and go through the
+  same path) but has never been confirmed against a real Neo4j instance in
+  any session so far (`test_neo4j_store.py` self-skips without one) -
+  flagging so a future session with live Neo4j access verifies it rather
+  than assuming.
+- Constraint: any future Node field should default to keeping
+  `NodeCreate`/`Node` construction working with the field entirely omitted
+  from the request - this is what let F024 land with zero API-layer or
+  store-layer code changes, only model changes.
+
+
 Log of deliberate, non-obvious choices so a future session doesn't reverse
 one without a new reason. Newest at the top. Dates below are the date this
 log entry was written (reconstructed from prior session summaries); the

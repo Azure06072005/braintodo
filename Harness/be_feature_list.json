@@ -210,6 +210,77 @@
           "layer": "frontend"
         }
       ]
+    },
+    [
+      {
+      "id": "F024",
+      "name": "Task fields on Node",
+      "behavior": "Node model gains node_type ('idea' | 'task', default 'idea'), due_date, priority, completed_at, and recurrence_rule fields. No new table or Postgres migration needed - Node data lives entirely in the GraphStore (Neo4j/in-memory), and both store implementations serialize Node via generic model_dump(), so adding fields to the Pydantic model was sufficient. Existing idea-nodes are unaffected (node_type defaults to 'idea', task fields stay null). completed_at is settable via NodeUpdate/Node but intentionally NOT exposed on NodeCreate - creating an already-completed task is out of scope, deferred to F025's complete endpoint.",
+      "verification": "pytest tests/test_nodes.py -x",
+      "state": "passing",
+      "priority": "P0",
+      "layer": "backend",
+      "depends_on": [
+        {
+          "id": "F001",
+          "layer": "backend"
+        },
+        {
+          "id": "F020",
+          "layer": "backend"
+        }
+      ],
+      "evidence": "Verified on a fresh clone of main. Confirmed via code reading (not assumed) that Postgres/db/models.py holds only User/EmailVerificationToken - Node has no Postgres table, so no Alembic migration was needed; both InMemoryGraphStore and Neo4jGraphStore persist Node via node.model_dump(), so the new fields round-trip through both backends with zero store-layer changes. Added 6 tests to tests/test_nodes.py: default node_type, task-field round-trip, invalid priority/recurrence_rule/node_type -> 422, and idea-node update leaving task fields untouched. Fast suite: 105 -> 111 passed. Full suite (incl. torch/Neo4j-dependent tests): 129 -> 135 passed, 1 skipped (test_neo4j_store.py self-skips, no live Neo4j in this session - not exercised end-to-end against real Neo4j). ruff check . -> clean. mypy src tests -> 0 errors, 85 files."
+    },
+    {
+      "id": "F025",
+      "name": "Task completion endpoints + task-filtered listing",
+      "behavior": "PATCH /nodes/{id}/complete sets completed_at and (if recurrence_rule is set) triggers F028; PATCH /nodes/{id}/reopen clears completed_at. GET /nodes accepts an optional ?type=task|idea filter, owner-scoped, reusing F014's existing pagination.",
+      "verification": "pytest tests/test_nodes.py -k complete -x",
+      "state": "not_started",
+      "priority": "P0",
+      "layer": "backend",
+      "depends_on": [
+        { "id": "F024", "layer": "backend" },
+        { "id": "F020", "layer": "backend" }
+      ]
+    },
+    {
+      "id": "F026",
+      "name": "Daily task query",
+      "behavior": "GET /tasks/today returns the caller's task-nodes with due_date <= today and completed_at IS NULL (overdue + due-today), owner-scoped via the existing F020 dependency.",
+      "verification": "pytest tests/test_tasks_api.py -k today -x",
+      "state": "not_started",
+      "priority": "P1",
+      "layer": "backend",
+      "depends_on": [
+        { "id": "F024", "layer": "backend" }
+      ]
+    },
+    {
+      "id": "F027",
+      "name": "Daily/period task summary",
+      "behavior": "GET /tasks/summary?date=YYYY-MM-DD returns {completed, created, overdue, avg_completion_seconds} for the caller's tasks on that date, owner-scoped. Computed server-side (not client-side from raw node lists) so the same aggregation can later feed GNN-based analytics.",
+      "verification": "pytest tests/test_tasks_api.py -k summary -x",
+      "state": "not_started",
+      "priority": "P1",
+      "layer": "backend",
+      "depends_on": [
+        { "id": "F026", "layer": "backend" }
+      ]
+    },
+    {
+      "id": "F028",
+      "name": "Task recurrence engine",
+      "behavior": "On PATCH /nodes/{id}/complete for a task-node with a non-null recurrence_rule (daily | weekly | monthly), a new task-node is auto-created with the next due_date computed from the rule, copying title/tags/priority/owner_id from the completed instance.",
+      "verification": "pytest tests/test_tasks_api.py -k recurrence -x",
+      "state": "not_started",
+      "priority": "P2",
+      "layer": "backend",
+      "depends_on": [
+        { "id": "F025", "layer": "backend" }
+      ]
     }
+    ]
   ]
 }
