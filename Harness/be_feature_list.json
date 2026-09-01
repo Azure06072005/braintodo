@@ -235,15 +235,22 @@
     {
       "id": "F025",
       "name": "Task completion endpoints + task-filtered listing",
-      "behavior": "PATCH /nodes/{id}/complete sets completed_at and (if recurrence_rule is set) triggers F028; PATCH /nodes/{id}/reopen clears completed_at. GET /nodes accepts an optional ?type=task|idea filter, owner-scoped, reusing F014's existing pagination.",
-      "verification": "pytest tests/test_nodes.py -k complete -x",
-      "state": "not_started",
+      "behavior": "PATCH /nodes/{id}/complete sets completed_at (via a dedicated GraphStore.complete_node, not the general update path); PATCH /nodes/{id}/reopen clears it via GraphStore.reopen_node. GET /nodes accepts an optional ?type=idea|task filter, owner-scoped, reusing F014's pagination. Both endpoints are generic to any Node (not type-restricted to 'task') and 404 identically for another user's node, per F020's ownership-is-not-leaked convention.",
+      "verification": "pytest tests/test_nodes.py -x",
+      "state": "passing",
       "priority": "P0",
       "layer": "backend",
       "depends_on": [
-        { "id": "F024", "layer": "backend" },
-        { "id": "F020", "layer": "backend" }
-      ]
+        {
+          "id": "F024",
+          "layer": "backend"
+        },
+        {
+          "id": "F020",
+          "layer": "backend"
+        }
+      ],
+      "evidence": "Verified on the same fresh clone as F024. Discovered mid-implementation that a plain PATCH through NodeUpdate cannot clear completed_at back to null - both store update_node() implementations use model_dump(exclude_unset=True, exclude_none=True), so an explicit None is silently dropped, not applied. Added dedicated GraphStore.complete_node()/reopen_node() protocol methods instead of routing reopen through NodeUpdate; Neo4jGraphStore.reopen_node uses Cypher REMOVE (Neo4j has no null-valued properties, only present/absent). Added node_type filtering to list_nodes_paginated in both InMemoryGraphStore and Neo4jGraphStore. Added 8 tests to tests/test_nodes.py: complete sets completed_at, reopen clears it, 404 on nonexistent node for both, 404 (not 403) when completing another user's node, and ?type= filtering (task-only, idea-only, unfiltered counts). Fast suite: 111 -> 117 passed. Full suite: 135 -> 141 passed, 1 skipped. ruff check . -> clean (one unused-noqa caught and removed mid-session). mypy src tests -> 0 errors, 85 files (one real invariance error caught mid-session: passing **dict[str, object] to neo4j's AsyncSession.run() needs a Mapping, not dict, due to variance - fixed by passing plain kwargs instead of unpacking a shared params dict)."
     },
     {
       "id": "F026",

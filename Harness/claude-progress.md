@@ -3,6 +3,30 @@
 Update this at the end of every session (Principle 5 & 12). This is what the
 next session reads to avoid starting from zero.
 
+## Session — 2026-09-01 (F025: Task completion endpoints + type filter)
+- Completed:
+  - `PATCH /nodes/{id}/complete` and `PATCH /nodes/{id}/reopen` - both call
+    new dedicated `GraphStore.complete_node`/`reopen_node` methods rather
+    than going through `NodeUpdate` (which structurally can't clear a field
+    back to null - see Decisions.md's F025 entry for why).
+  - `GET /nodes?type=idea|task` filter, threaded through
+    `NodeRepository.list_paginated` and both `GraphStore` implementations.
+  - 8 new tests in `tests/test_nodes.py`.
+  - Flipped F025 to `passing` in `Harness/be_feature_list.json`; id-integrity
+    check passed (25 unique ids, no dupes).
+- Verification evidence:
+  - Fast suite: 111 -> 117 passed. Full suite: 135 -> 141 passed, 1 skipped.
+  - `ruff check .` clean (caught and fixed one unused `noqa` mid-session).
+  - `mypy src tests` -> 0 errors, 85 files (caught and fixed one real
+    dict-variance error in the Neo4j query params mid-session).
+- Not done / flagged for a future session:
+  - Same Neo4j-live-instance caveat as F024 - `complete_node`/`reopen_node`
+    on `Neo4jGraphStore` are implemented and type-checked but never run
+    against a real Neo4j (no daemon available in any session's sandbox).
+- Next session should:
+  1. F026 (`GET /tasks/today`) - depends on F024 (done) and can start now.
+  2. Do not start F026 in this same session (WIP=1 handoff).
+
 ## Session — 2026-09-01 (F024: Task fields on Node)
 - Completed:
   - Added `node_type` ("idea" | "task", default "idea"), `due_date`,

@@ -1,6 +1,7 @@
 from functools import lru_cache
+from typing import Literal
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from braintodo.api.auth import get_current_user
 from braintodo.config import settings
@@ -69,10 +70,11 @@ async def create_node(
 async def list_nodes(
     skip: int = 0,
     limit: int = 20,
+    type: Literal["idea", "task"] | None = Query(default=None),
     repo: NodeRepository = Depends(get_node_repository),
     current_user: User = Depends(get_current_user),
 ) -> Page[Node]:
-    return await repo.list_paginated(str(current_user.id), skip, limit)
+    return await repo.list_paginated(str(current_user.id), skip, limit, node_type=type)
 
 
 @router.get("/{node_id}", response_model=Node)
@@ -97,6 +99,36 @@ async def update_node(
 ) -> Node:
     try:
         node = await repo.update(node_id, data, str(current_user.id))
+    except NodeNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    await manager.broadcast("node_updated", node.model_dump(), str(current_user.id))
+    return node
+
+
+@router.patch("/{node_id}/complete", response_model=Node)
+async def complete_node(
+    node_id: str,
+    repo: NodeRepository = Depends(get_node_repository),
+    manager: ConnectionManager = Depends(get_manager),
+    current_user: User = Depends(get_current_user),
+) -> Node:
+    try:
+        node = await repo.complete(node_id, str(current_user.id))
+    except NodeNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    await manager.broadcast("node_updated", node.model_dump(), str(current_user.id))
+    return node
+
+
+@router.patch("/{node_id}/reopen", response_model=Node)
+async def reopen_node(
+    node_id: str,
+    repo: NodeRepository = Depends(get_node_repository),
+    manager: ConnectionManager = Depends(get_manager),
+    current_user: User = Depends(get_current_user),
+) -> Node:
+    try:
+        node = await repo.reopen(node_id, str(current_user.id))
     except NodeNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     await manager.broadcast("node_updated", node.model_dump(), str(current_user.id))

@@ -70,9 +70,17 @@ class NodeRepository(BaseRepository[Node, NodeCreate, NodeUpdate]):
     async def delete(self, id: str, owner_id: str) -> None:
         await self._store.delete_node(id, owner_id)
 
-    async def list_paginated(self, owner_id: str, skip: int = 0, limit: int = 20) -> Page[Node]:
-        items, total = await self._store.list_nodes_paginated(skip, limit, owner_id)
+    async def list_paginated(
+        self, owner_id: str, skip: int = 0, limit: int = 20, node_type: str | None = None
+    ) -> Page[Node]:
+        items, total = await self._store.list_nodes_paginated(skip, limit, owner_id, node_type)
         return Page(items=items, total=total, skip=skip, limit=limit)
+
+    async def complete(self, id: str, owner_id: str) -> Node:
+        return await self._store.complete_node(id, owner_id)
+
+    async def reopen(self, id: str, owner_id: str) -> Node:
+        return await self._store.reopen_node(id, owner_id)
 
 
 class EdgeRepository(BaseRepository[Edge, EdgeCreate, EdgeUpdate]):

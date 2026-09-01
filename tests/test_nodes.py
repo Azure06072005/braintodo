@@ -133,6 +133,86 @@ async def test_update_idea_node_does_not_require_task_fields(auth_headers) -> No
     assert body["recurrence_rule"] is None
 
 
+async def test_complete_task_sets_completed_at(auth_headers) -> None:
+    client, headers, _store = auth_headers
+    resp = await client.post(
+        "/nodes", json={"title": "Task", "node_type": "task"}, headers=headers
+    )
+    node_id = resp.json()["id"]
+
+    resp = await client.patch(f"/nodes/{node_id}/complete", headers=headers)
+    assert resp.status_code == 200
+    assert resp.json()["completed_at"] is not None
+
+
+async def test_reopen_clears_completed_at(auth_headers) -> None:
+    client, headers, _store = auth_headers
+    resp = await client.post(
+        "/nodes", json={"title": "Task", "node_type": "task"}, headers=headers
+    )
+    node_id = resp.json()["id"]
+    await client.patch(f"/nodes/{node_id}/complete", headers=headers)
+
+    resp = await client.patch(f"/nodes/{node_id}/reopen", headers=headers)
+    assert resp.status_code == 200
+    assert resp.json()["completed_at"] is None
+
+
+async def test_complete_nonexistent_node_returns_404(auth_headers) -> None:
+    client, headers, _store = auth_headers
+    resp = await client.patch("/nodes/does-not-exist/complete", headers=headers)
+    assert resp.status_code == 404
+
+
+async def test_reopen_nonexistent_node_returns_404(auth_headers) -> None:
+    client, headers, _store = auth_headers
+    resp = await client.patch("/nodes/does-not-exist/reopen", headers=headers)
+    assert resp.status_code == 404
+
+
+async def test_cannot_complete_another_users_node(app_client) -> None:
+    client, _store, make_token = app_client
+    token_a = await make_token(email="a2@example.com")
+    token_b = await make_token(email="b2@example.com")
+    resp = await client.post(
+        "/nodes",
+        json={"title": "A's task", "node_type": "task"},
+        headers={"Authorization": f"Bearer {token_a}"},
+    )
+    node_id = resp.json()["id"]
+
+    resp = await client.patch(
+        f"/nodes/{node_id}/complete",
+        headers={"Authorization": f"Bearer {token_b}"},
+    )
+    assert resp.status_code == 404
+
+
+async def test_list_nodes_filtered_by_type(auth_headers) -> None:
+    client, headers, _store = auth_headers
+    await client.post("/nodes", json={"title": "Idea A"}, headers=headers)
+    await client.post(
+        "/nodes", json={"title": "Task A", "node_type": "task"}, headers=headers
+    )
+    await client.post(
+        "/nodes", json={"title": "Task B", "node_type": "task"}, headers=headers
+    )
+
+    resp = await client.get("/nodes?type=task", headers=headers)
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["total"] == 2
+    assert all(item["node_type"] == "task" for item in body["items"])
+
+    resp = await client.get("/nodes?type=idea", headers=headers)
+    body = resp.json()
+    assert body["total"] == 1
+    assert body["items"][0]["node_type"] == "idea"
+
+    resp = await client.get("/nodes", headers=headers)
+    assert resp.json()["total"] == 3
+
+
 async def test_user_cannot_see_another_users_node(app_client) -> None:
     client, _store, make_token = app_client
     token_a = await make_token(email="a@example.com")
