@@ -3,6 +3,35 @@
 Update this at the end of every session (Principle 5 & 12). This is what the
 next session reads to avoid starting from zero.
 
+## Session — 2026-09-01 (F024: Task fields on Node)
+- Completed:
+  - Added `node_type` ("idea" | "task", default "idea"), `due_date`,
+    `priority`, `completed_at`, `recurrence_rule` to `Node`/`NodeCreate`/
+    `NodeUpdate` in `src/braintodo/models/node.py`. `completed_at` is on
+    `NodeUpdate`/`Node` only, not `NodeCreate` (out of scope - F025's job).
+  - Confirmed via code reading (not assumed) that no Postgres migration or
+    store-layer change was needed - see Decisions.md's F024 entry.
+  - Added 6 tests to `tests/test_nodes.py`: default `node_type`, task-field
+    round-trip, invalid `priority`/`recurrence_rule`/`node_type` -> 422,
+    idea-node update leaves task fields untouched.
+  - Flipped F024 to `passing` in `Harness/be_feature_list.json` with real
+    evidence; ran the duplicate/completeness id check (24 unique ids, no
+    dupes) per the 2026-08-19 incident's process fix.
+- Verification evidence:
+  - Fast suite: 105 -> 111 passed.
+  - Full suite (incl. torch/Neo4j-dependent tests): 129 -> 135 passed,
+    1 skipped (`test_neo4j_store.py` self-skips, no live Neo4j available).
+  - `ruff check .` clean. `mypy src tests` -> 0 errors, 85 files.
+- Not done / flagged for a future session:
+  - The Neo4j null-property-omission behavior this feature relies on has
+    still never been confirmed against a real Neo4j instance - see
+    Decisions.md.
+- Next session should:
+  1. F025 (task completion/reopen endpoints + `?type=` filter) - depends on
+     F024, now unblocked.
+  2. Do not start F025 in this same session (WIP=1 handoff).
+
+
 ## Session — 2026-08-25 (FE021: NodeForm i18n migration)
 - Continued the i18n migration plan (FE019/FE020) into `NodeForm.jsx` — the
   third component migrated, following the same pattern: add a

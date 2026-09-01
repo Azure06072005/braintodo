@@ -47,5 +47,19 @@
     "submit_create": "Create idea",
     "submit_edit": "Save changes",
     "cancel": "Cancel"
+  },
+  "edge_form": {
+    "from_node_label": "From node",
+    "to_node_label": "To node",
+    "relation_type_label": "Relation type (relation_type)",
+    "relation_type_placeholder": "expands, part_of, conflicts_with...",
+    "line_style_label": "Line style",
+    "line_style_solid": "solid",
+    "line_style_dashed": "dashed",
+    "same_node_error": "Source and target node must be different",
+    "not_enough_nodes": "Need at least 2 nodes to create a link. Create another node first.",
+    "saving": "Saving…",
+    "submit_create": "Create link",
+    "cancel": "Cancel"
   }
 }

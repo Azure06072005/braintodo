@@ -265,6 +265,82 @@
           "layer": "frontend"
         }
       ]
+    },
+    {
+      "id": "FE027",
+      "name": "EdgeForm i18n migration",
+      "behavior": "EdgeForm.jsx migrated off hardcoded Vietnamese strings (from_node_label, to_node_label, relation_type_label, relation_type_placeholder, line_style_label, line_style_solid, line_style_dashed, same_node_error, not_enough_nodes, saving, submit_create, cancel) to t(...) calls under a new 'edge_form' locale namespace in all 3 locale files (vi/en/ja). Continues the FE019/FE020/FE021 i18n migration plan.",
+      "verification": "cd frontend && npm run test -- src/components/EdgeForm.test.jsx",
+      "state": "passing",
+      "evidence": "2026-08-31. Added 'edge_form' namespace across vi.json, en.json, and ja.json. Replaced hardcoded text in EdgeForm.jsx with t('edge_form.*') calls. Added an English rendering test in EdgeForm.test.jsx. Full test suite: 27 files, 156 passed, build clean (631 modules), lint clean (0 warnings, 0 errors).",
+      "priority": "P2",
+      "layer": "frontend",
+      "depends_on": [
+        {
+          "id": "FE019",
+          "layer": "frontend"
+        },
+        {
+          "id": "FE020",
+          "layer": "frontend"
+        }
+      ]
+    },
+    [
+  {
+    "id": "FE028",
+    "name": "TaskListPage (Today / Upcoming / Someday)",
+    "behavior": "New routed view, list/board layout grouped by due date, querying the same Node store via F026 filtered to node_type=task. Consumes theme.js universe tokens and PersonalizationContext (glow, palette, comet-trail) rather than hardcoded colors - zero visual regression for users who never open the settings panel, per FE023's default-value contract. All copy goes through t('task.*') locale keys in vi/en/ja from the start (no hardcoded-string debt, per the FE027 migration lesson). Gated live-only in production per FE026's IS_DEV pattern - no prod-visible mock toggle.",
+    "verification": "cd frontend && npm run test -- src/pages/TaskListPage.test.jsx",
+    "state": "not_started",
+    "priority": "P0",
+    "layer": "frontend",
+    "depends_on": [
+      { "id": "FE022", "layer": "frontend" },
+      { "id": "FE023", "layer": "frontend" },
+      { "id": "FE026", "layer": "frontend" },
+      { "id": "F026", "layer": "backend" }
+    ]
+  },
+  {
+    "id": "FE029",
+    "name": "TaskQuickAdd",
+    "behavior": "Fast-entry bar for creating a task-node: title plus optional due date, priority, and linked idea-node. Reuses NodeForm's (FE009) accessible-label pattern rather than inventing a new form convention.",
+    "verification": "cd frontend && npm run test -- src/components/TaskQuickAdd.test.jsx",
+    "state": "not_started",
+    "priority": "P1",
+    "layer": "frontend",
+    "depends_on": [
+      { "id": "FE028", "layer": "frontend" },
+      { "id": "FE009", "layer": "frontend" }
+    ]
+  },
+  {
+    "id": "FE030",
+    "name": "Daily summary board",
+    "behavior": "Widget showing F027's completed/created/overdue counts and avg completion time for the selected date, i18n'd. Optionally live-updates via the existing per-owner-scoped /ws channel (F013) if the board is open when a task completes.",
+    "verification": "cd frontend && npm run test -- src/components/DailySummaryBoard.test.jsx",
+    "state": "not_started",
+        "priority": "P1",
+        "layer": "frontend",
+        "depends_on": [
+          { "id": "F027", "layer": "backend" },
+          { "id": "FE028", "layer": "frontend" }
+        ]
+      },
+    {
+      "id": "FE031",
+      "name": "Task <-> Node linker",
+      "behavior": "UI affordance to attach a task-node to an existing idea-node via a typed Edge (e.g. resolves), reusing EdgeForm's (FE010) source/target selection pattern rather than a new linking widget.",
+      "verification": "cd frontend && npm run test -- src/components/TaskNodeLinker.test.jsx",
+      "state": "not_started",
+      "priority": "P2",
+      "layer": "frontend",
+      "depends_on": [
+        { "id": "FE010", "layer": "frontend" },
+        { "id": "FE028", "layer": "frontend" }
+      ]
     }
+    ]
   ]
 }
