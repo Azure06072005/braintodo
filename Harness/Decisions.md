@@ -1,6 +1,26 @@
-# Design Decisions — braintodo
+## 2026-09-01: F025 — completion/reopen via dedicated store methods, not NodeUpdate
+- Reason: `InMemoryGraphStore.update_node` and `Neo4jGraphStore.update_node`
+  both call `data.model_dump(exclude_unset=True, exclude_none=True)`, so an
+  explicit `NodeUpdate(completed_at=None)` is indistinguishable from "field
+  not touched" - the None is dropped before it reaches either store. A
+  "reopen" operation needs to genuinely clear the field, which the existing
+  update path structurally cannot do.
+- Fix: added `complete_node`/`reopen_node` to the `GraphStore` Protocol as
+  first-class operations, implemented directly in each store rather than
+  routed through `NodeUpdate`. `Neo4jGraphStore.reopen_node` uses Cypher
+  `REMOVE n.completed_at` rather than `SET n.completed_at = null` - Neo4j
+  properties are either present or absent, there is no null-valued property
+  state to set.
+- Rejected: adding a `clear_fields: list[str]` escape hatch to `NodeUpdate`
+  generically - broader than this feature needs, and would let a normal
+  `PATCH /nodes/{id}` body silently disagree with itself (e.g. a field both
+  set and listed to clear) for no in-scope benefit.
+- Constraint: any future field that needs "explicitly clear back to unset"
+  semantics (not just "leave untouched") needs its own dedicated store
+  method, following this precedent - it cannot go through `NodeUpdate`'s
+  `exclude_none` path.
 
-## 2026-09-01: F024 — Task fields added to Node with no Postgres migration
+
 - Reason: `AGENTS.md`/`Architecture.md` describe a two-store split (Neo4j
   structure, Postgres relational/auth), which suggested a migration might be
   needed. Checked `src/braintodo/db/models.py` directly before writing any

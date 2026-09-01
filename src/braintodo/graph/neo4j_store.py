@@ -1,4 +1,5 @@
 import uuid
+from datetime import UTC, datetime
 
 from neo4j import AsyncDriver, AsyncGraphDatabase
 
@@ -84,25 +85,60 @@ class Neo4jGraphStore:
             return [Node(**dict(r["n"])) async for r in records]
 
     async def list_nodes_paginated(
-        self, skip: int, limit: int, owner_id: str
+        self, skip: int, limit: int, owner_id: str, node_type: str | None = None
     ) -> tuple[list[Node], int]:
+        type_clause = " AND n.node_type = $node_type" if node_type is not None else ""
         async with self._driver.session() as session:
             records = await session.run(
-                f"MATCH (n:{_NODE_LABEL} {{owner_id: $owner_id}}) "
+                f"MATCH (n:{_NODE_LABEL} {{owner_id: $owner_id}}) WHERE true{type_clause} "
                 "RETURN n ORDER BY n.id SKIP $skip LIMIT $limit",
                 owner_id=owner_id,
                 skip=skip,
                 limit=limit,
+                node_type=node_type,
             )
             items = [Node(**dict(r["n"])) async for r in records]
             count_record = await (
                 await session.run(
-                    f"MATCH (n:{_NODE_LABEL} {{owner_id: $owner_id}}) RETURN count(n) AS c",
+                    f"MATCH (n:{_NODE_LABEL} {{owner_id: $owner_id}}) WHERE true{type_clause} "
+                    "RETURN count(n) AS c",
                     owner_id=owner_id,
+                    node_type=node_type,
                 )
             ).single()
         total = count_record["c"] if count_record else 0
         return items, total
+
+    async def complete_node(self, node_id: str, owner_id: str) -> Node:
+        async with self._driver.session() as session:
+            record = await (
+                await session.run(
+                    f"MATCH (n:{_NODE_LABEL} {{id: $id, owner_id: $owner_id}}) "
+                    "SET n.completed_at = $now RETURN n",
+                    id=node_id,
+                    owner_id=owner_id,
+                    now=datetime.now(UTC),
+                )
+            ).single()
+        if record is None:
+            raise NodeNotFoundError(node_id)
+        return Node(**dict(record["n"]))
+
+    async def reopen_node(self, node_id: str, owner_id: str) -> Node:
+        # Neo4j has no "set property to null" - a property is either present
+        # or absent, so clearing completed_at means REMOVE, not SET to null.
+        async with self._driver.session() as session:
+            record = await (
+                await session.run(
+                    f"MATCH (n:{_NODE_LABEL} {{id: $id, owner_id: $owner_id}}) "
+                    "REMOVE n.completed_at RETURN n",
+                    id=node_id,
+                    owner_id=owner_id,
+                )
+            ).single()
+        if record is None:
+            raise NodeNotFoundError(node_id)
+        return Node(**dict(record["n"]))
 
     async def create_edge(self, data: EdgeCreate, owner_id: str) -> Edge:
         edge_id = str(uuid.uuid4())

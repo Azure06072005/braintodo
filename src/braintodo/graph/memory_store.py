@@ -1,4 +1,5 @@
 import uuid
+from datetime import UTC, datetime
 
 import networkx as nx
 
@@ -54,17 +55,30 @@ class InMemoryGraphStore:
         ]
 
     async def list_nodes_paginated(
-        self, skip: int, limit: int, owner_id: str
+        self, skip: int, limit: int, owner_id: str, node_type: str | None = None
     ) -> tuple[list[Node], int]:
         all_nodes = sorted(
             (
                 Node(**attrs)
                 for _, attrs in self._graph.nodes(data=True)
                 if attrs.get("owner_id") == owner_id
+                and (node_type is None or attrs.get("node_type") == node_type)
             ),
             key=lambda n: n.id,
         )
         return all_nodes[skip : skip + limit], len(all_nodes)
+
+    async def complete_node(self, node_id: str, owner_id: str) -> Node:
+        existing = self._get_owned_node(node_id, owner_id)
+        updated = existing.model_copy(update={"completed_at": datetime.now(UTC)})
+        self._graph.nodes[node_id]["completed_at"] = updated.completed_at
+        return updated
+
+    async def reopen_node(self, node_id: str, owner_id: str) -> Node:
+        existing = self._get_owned_node(node_id, owner_id)
+        updated = existing.model_copy(update={"completed_at": None})
+        self._graph.nodes[node_id]["completed_at"] = None
+        return updated
 
     async def create_edge(self, data: EdgeCreate, owner_id: str) -> Edge:
         # Both endpoints must exist AND belong to this owner - otherwise a
