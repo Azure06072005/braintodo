@@ -211,8 +211,7 @@
         }
       ]
     },
-    [
-      {
+    {
       "id": "F024",
       "name": "Task fields on Node",
       "behavior": "Node model gains node_type ('idea' | 'task', default 'idea'), due_date, priority, completed_at, and recurrence_rule fields. No new table or Postgres migration needed - Node data lives entirely in the GraphStore (Neo4j/in-memory), and both store implementations serialize Node via generic model_dump(), so adding fields to the Pydantic model was sufficient. Existing idea-nodes are unaffected (node_type defaults to 'idea', task fields stay null). completed_at is settable via NodeUpdate/Node but intentionally NOT exposed on NodeCreate - creating an already-completed task is out of scope, deferred to F025's complete endpoint.",
@@ -288,6 +287,5 @@
         { "id": "F025", "layer": "backend" }
       ]
     }
-    ]
   ]
 }
