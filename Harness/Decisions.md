@@ -1,3 +1,19 @@
+# Design Decisions — braintodo
+
+## 2026-09-01: F026 — naive date.today()/datetime.now() banned by ruff (DTZ), use tz-aware equivalents
+- Reason: ruff's DTZ011 rule flagged `date.today()` in both the new
+  `/tasks/today` implementation and its tests - this project already
+  standardizes on `datetime.now(UTC)` elsewhere (F013's realtime timestamps,
+  F024/F025's `completed_at`), so naive `date.today()` was inconsistent with
+  that, not just a lint nag.
+- Fix: `datetime.now(UTC).date()` everywhere a "what day is it" comparison
+  is needed, including in tests (which also switched from a hardcoded date
+  string to a value computed relative to "now", so the suite doesn't start
+  silently failing on a future run date).
+- Constraint: any new code comparing against "today" should use
+  `datetime.now(UTC).date()`, not `date.today()` - keep it consistent with
+  the rest of the codebase's UTC-aware timestamp convention.
+
 ## 2026-09-01: F025 — completion/reopen via dedicated store methods, not NodeUpdate
 - Reason: `InMemoryGraphStore.update_node` and `Neo4jGraphStore.update_node`
   both call `data.model_dump(exclude_unset=True, exclude_none=True)`, so an

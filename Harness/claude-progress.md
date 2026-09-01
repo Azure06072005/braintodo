@@ -3,6 +3,29 @@
 Update this at the end of every session (Principle 5 & 12). This is what the
 next session reads to avoid starting from zero.
 
+## Session — 2026-09-01 (F026: Daily task query)
+- Completed:
+  - New `GET /tasks/today` in `src/braintodo/api/tasks.py` (new router,
+    registered in `main.py`). Returns the caller's task-nodes due today or
+    overdue, not completed, owner-scoped. Filters via `GraphStore.list_nodes`
+    in Python rather than a new Cypher query - scope note left in the
+    function docstring for a future session if this needs to scale.
+  - 7 new tests in `tests/test_tasks_api.py`.
+  - Flipped F026 to `passing` in `Harness/be_feature_list.json`; id-integrity
+    check passed (26 unique ids, no dupes).
+- Verification evidence:
+  - Fast suite: 117 -> 124 passed. Full suite: 141 -> 148 passed, 1 skipped.
+  - `ruff check .` clean (caught and fixed DTZ011 naive `date.today()` usage
+    mid-session, in both the implementation and the tests - see Decisions.md).
+  - `mypy src tests` -> 0 errors, 87 files.
+  - Also caught during this session: the test suite was initially written
+    with a hardcoded due-date string that happened to match today's actual
+    date - fixed to compute dates relative to `datetime.now(UTC)` before
+    finalizing, so the suite won't start silently failing on a future run.
+- Next session should:
+  1. F027 (`GET /tasks/summary?date=`) - depends on F026 (done).
+  2. Do not start F027 in this same session (WIP=1 handoff).
+
 ## Session — 2026-09-01 (F025: Task completion endpoints + type filter)
 - Completed:
   - `PATCH /nodes/{id}/complete` and `PATCH /nodes/{id}/reopen` - both call
