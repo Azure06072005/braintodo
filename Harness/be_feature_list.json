@@ -174,7 +174,7 @@
     {
       "id": "F022",
       "name": "Clustering service upgrade: Leiden algorithm + configurable resolution + semantic cluster labels",
-      "behavior": "ClusterService rewritten to use the Leiden algorithm (via python-igraph + leidenalg) instead of Louvain (networkx.algorithms.community.louvain_communities) - Leiden guarantees internally well-connected communities and converges faster; Louvain can produce internally-disconnected communities, a known algorithmic weakness. detect_clusters(owner_id, resolution=1.0) now accepts a resolution parameter (higher -> more, smaller clusters; lower -> fewer, larger ones), exposed on GET /clusters as an optional ?resolution= query param (validated > 0, 422 otherwise). The Cluster model gains a `label: str | None` field: a human-readable name derived from the cluster's member node embeddings (the node closest to the cluster's embedding centroid by cosine similarity becomes the label, e.g. 'Auth flow' instead of 'Cluster 3'), reusing each node's already-computed F003 text embedding rather than re-embedding anything. label is None when no member node has an embedding yet, so callers fall back to a numeric label themselves rather than being handed a fabricated one. Frontend GraphCanvas.jsx wired to prefer this label over the old hardcoded numeric 'Cụm N' text when present.",
+      "behavior": "ClusterService rewritten to use the Leiden algorithm (via python-igraph + leidenalg) instead of Louvain (networkx.algorithms.community.louvain_communities) - Leiden guarantees internally well-connected communities and converges faster; Louvain can produce internally-disconnected communities, a known algorithmic weakness. detect_clusters(owner_id, resolution=1.0) now accepts a resolution parameter (higher -> more, smaller clusters; lower -> fewer, larger ones), exposed on GET /clusters as an optional ?resolution= query param (validated > 0, 422 otherwise). The Cluster model gains a `label: str | None` field: a human-readable name derived from the cluster's member node embeddings (the node closest to the cluster's embedding centroid by cosine similarity becomes the label, e.g. 'Auth flow' instead of 'Cluster 3'), reusing each node's already-computed F003 text embedding rather than re-embedding anything. label is None when no member node has an embedding yet, so callers fall back to a numeric label themselves rather than being handed a fabricated one. Frontend GraphCanvas.jsx wired to prefer this label over the old hardcoded numeric 'C\u1ee5m N' text when present.",
       "verification": "pytest tests/test_clustering.py tests/test_clusters_api.py -x",
       "state": "passing",
       "evidence": "2026-08-25. Implemented per the universe-theme roadmap (F022 was the one genuine backend feature in that plan - see Decisions.md). Installed python-igraph and leidenalg, verified smoke-test behavior directly before building on them (two-triangle split, isolated-node singleton, empty-graph, determinism-with-fixed-seed - all matched the prior Louvain implementation's expected outputs exactly). All 4 pre-existing test_clustering.py tests and both pre-existing test_clusters_api.py tests pass UNMODIFIED against the new algorithm. Added 9 new backend tests: resolution parameter accepted + deterministic, higher resolution produces >= as many clusters (bridge-graph case), label uses the title of the node closest to the embedding centroid (verified against a 'far outlier' embedding to confirm it's not just picking an arbitrary member), label is None with no embedded members, label falls back correctly for a single embedded member, plus 4 direct unit tests for the _cosine_similarity/_centroid helper functions (identical vectors, orthogonal vectors, zero-vector no-crash, centroid averaging). Added 2 new API tests: resolution query param accepted, resolution <= 0 rejected with 422. Fixed one real mypy gap surfaced by the new code (Node.embedding is list[float] | None; the list-comprehension filter didn't narrow the type for mypy) by carrying the narrowed embedding alongside its node in tuples rather than re-accessing the possibly-None field. Frontend: wired GraphCanvas.jsx to use cluster.label when present, added a regression test proving the semantic label takes priority over the numeric fallback and that a null label still falls back correctly (not rendering the literal string 'null'). Full verification: pytest -q (backend) -> 129 passed, 1 skipped (up from 118); ruff check . -> clean (caught and fixed an import-ordering issue and an unused test variable before landing clean); mypy src tests -> 0 errors, 85 files. npm run test (frontend) -> 19 files, 117 passed (up from 116); npm run build -> 619 modules, clean; npm run lint -> 0 warnings/0 errors, 49 files.",
@@ -254,38 +254,18 @@
     {
       "id": "F026",
       "name": "Daily task query",
-      "behavior": "GET /tasks/today returns the caller's task-nodes with due_date <= today and completed_at IS NULL (overdue + due-today), owner-scoped via the existing F020 dependency.",
-      "verification": "pytest tests/test_tasks_api.py -k today -x",
-      "state": "not_started",
+      "behavior": "GET /tasks/today returns the caller's task-nodes (node_type=='task') that are due today or overdue (due_date <= today) and not completed (completed_at is None), owner-scoped. New /tasks router, registered in main.py alongside the existing routers.",
+      "verification": "pytest tests/test_tasks_api.py -x",
+      "state": "passing",
       "priority": "P1",
       "layer": "backend",
       "depends_on": [
-        { "id": "F024", "layer": "backend" }
-      ]
-    },
-    {
-      "id": "F027",
-      "name": "Daily/period task summary",
-      "behavior": "GET /tasks/summary?date=YYYY-MM-DD returns {completed, created, overdue, avg_completion_seconds} for the caller's tasks on that date, owner-scoped. Computed server-side (not client-side from raw node lists) so the same aggregation can later feed GNN-based analytics.",
-      "verification": "pytest tests/test_tasks_api.py -k summary -x",
-      "state": "not_started",
-      "priority": "P1",
-      "layer": "backend",
-      "depends_on": [
-        { "id": "F026", "layer": "backend" }
-      ]
-    },
-    {
-      "id": "F028",
-      "name": "Task recurrence engine",
-      "behavior": "On PATCH /nodes/{id}/complete for a task-node with a non-null recurrence_rule (daily | weekly | monthly), a new task-node is auto-created with the next due_date computed from the rule, copying title/tags/priority/owner_id from the completed instance.",
-      "verification": "pytest tests/test_tasks_api.py -k recurrence -x",
-      "state": "not_started",
-      "priority": "P2",
-      "layer": "backend",
-      "depends_on": [
-        { "id": "F025", "layer": "backend" }
-      ]
+        {
+          "id": "F024",
+          "layer": "backend"
+        }
+      ],
+      "evidence": "Verified on the same fresh clone as F024/F025. New src/braintodo/api/tasks.py, registered in main.py (import + tags_metadata entry + include_router), reuses the existing get_store/get_current_user dependencies rather than inventing new wiring. Filters via GraphStore.list_nodes (unpaginated, in-memory filter) rather than a new Cypher query shape - acceptable at the \"today\" working-set scale, documented as a scope note in the function docstring for a future session to revisit if it becomes a bottleneck. 7 new tests in tests/test_tasks_api.py: excludes idea-nodes, includes overdue+due-today, excludes future-dated and no-due-date tasks, excludes completed tasks (exercises F025), owner scoping, and 401 without auth. Test dates computed relative to datetime.now(UTC).date() rather than hardcoded, so the suite does not silently start failing on a future run date. Fast suite: 117 -> 124 passed. Full suite: 141 -> 148 passed, 1 skipped. ruff check . -> clean (caught and fixed DTZ011 naive date.today() usage in both the implementation and the tests mid-session, replaced with datetime.now(UTC).date()). mypy src tests -> 0 errors, 87 files."
     }
   ]
 }

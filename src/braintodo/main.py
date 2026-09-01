@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from braintodo.db.base import close_engine
 
-from .api import analytics, auth, clusters, edges, gnn, graph, links, nodes, realtime, search
+from .api import analytics, auth, clusters, edges, gnn, graph, links, nodes, realtime, search, tasks
 from .graph.migrations import run_migrations
 
 logger = logging.getLogger(__name__)
@@ -65,6 +65,10 @@ tags_metadata = [
         "name": "graph",
         "description": "Export/import toàn bộ đồ thị dạng JSON.",
     },
+    {
+        "name": "tasks",
+        "description": "Truy vấn task-node đến hạn/quá hạn trong ngày.",
+    },
 ]
 
 app = FastAPI(
@@ -99,3 +103,4 @@ app.include_router(realtime.router)
 app.include_router(search.router)
 app.include_router(graph.router)
 app.include_router(auth.router)
+app.include_router(tasks.router)
