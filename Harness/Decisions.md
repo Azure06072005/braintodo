@@ -1,5 +1,66 @@
 # Design Decisions — braintodo
 
+## 2026-09-01: F027 session — incidental fix: WebSocket broadcasts were silently dropping non-JSON-serializable payloads
+- What happened: adding `Node.created_at` (a real `datetime`, always populated
+  via `default_factory`, not an optional field like `due_date`/`completed_at`)
+  meant *every* node - including plain idea-nodes - now carried a raw
+  `datetime` object into `node.model_dump()`. That dict is passed straight to
+  `ConnectionManager.broadcast()`, which calls `websocket.send_json()`
+  (stdlib `json.dumps` under the hood). A raw `datetime` isn't JSON
+  serializable, so every single broadcast started raising `TypeError` -
+  but `ConnectionManager.broadcast()`'s `except Exception` treated that as
+  "client disconnected" and silently dropped the connection instead of
+  raising. Every caller awaiting a broadcast succeeded (the REST response
+  came back 201 fine); every WebSocket client waiting on that event hung
+  forever. Caught because `tests/test_realtime_api.py` timed out during this
+  session's full-suite run instead of failing fast - traced via
+  `pytest-timeout`'s stack dump to `ws.receive_json()` blocking forever.
+- Impact assessment: this was a **latent bug from F024**, not new to F027 -
+  `due_date`/`completed_at` are also raw `date`/`datetime` on the wire, but
+  both defaulted to `None` (JSON-serializable), so no F024/F025 test ever
+  populated a non-None date/datetime field on a node that also had a
+  WebSocket listener attached, and the bug stayed invisible until
+  `created_at`'s non-optional default made it unconditional.
+- Fix (two parts, both necessary):
+  1. Every `manager.broadcast(..., x.model_dump(), ...)` call site
+     (`api/nodes.py`, `api/edges.py`, `api/graph.py`) now uses
+     `x.model_dump(mode="json")`, which lets Pydantic convert
+     date/datetime/etc. to JSON-safe values before they ever reach
+     `send_json`.
+  2. `ConnectionManager.broadcast()`'s bare `except Exception` was narrowed
+     to `except (WebSocketDisconnect, RuntimeError)` - the actual exception
+     shapes for a genuinely dead client - so a future serialization bug (or
+     any other real bug) raises loudly instead of being misclassified as a
+     dead connection and hanging every caller.
+- Constraint: any new Node/Edge/response field with a non-JSON-native Python
+  type (date, datetime, UUID, Decimal, etc.) must be exercised by at least
+  one test that also has a WebSocket listener attached (see
+  `test_realtime_api.py`'s pattern), not just a plain REST round-trip test -
+  a REST-only test would have kept missing this class of bug indefinitely.
+
+## 2026-09-01: F028 — recurrence requires a due_date to anchor to; advances from the completed occurrence's due_date, not "today"
+- Reason: a recurring task with no `due_date` has nothing to compute a next
+  occurrence relative to. Two options existed: guess (anchor to "today") or
+  skip. Guessing was rejected - it would make a task's rhythm depend on
+  *when it happened to get completed* rather than its schedule, which is
+  exactly the bug a recurrence feature is supposed to prevent (a task due
+  "every Monday" should stay anchored to Mondays even if completed late).
+- Fix: `_advance_due_date(due_date, rule)` computes the next date purely
+  from the prior `due_date` (+1 day / +7 days / +1 calendar month, clamped
+  to the target month's real last day for `monthly` - e.g. Jan 31 -> Feb 28
+  in a non-leap year). Completing a `recurrence_rule`-set task with
+  `due_date is None` creates nothing.
+- Rejected: an RRULE-style recurrence string for more flexible schedules
+  (e.g. "every 2nd Tuesday") - out of scope for this feature's stated
+  behavior (daily/weekly/monthly enum), and would be premature complexity
+  before any real usage demands it.
+- Constraint: the new instance is created via `NodeRepository.create()`
+  (the full creation path, including embedding computation), not by calling
+  the store directly - so a recurring task-node gets the same embedding/
+  clustering treatment as any other node, per this project's existing
+  "GNN logic stays generic, don't special-case node types in routers/stores"
+  convention.
+
 ## 2026-09-01: F026 — naive date.today()/datetime.now() banned by ruff (DTZ), use tz-aware equivalents
 - Reason: ruff's DTZ011 rule flagged `date.today()` in both the new
   `/tasks/today` implementation and its tests - this project already

@@ -1,4 +1,6 @@
 import asyncio
+import calendar
+from datetime import date
 from typing import Generic, TypeVar
 
 from pydantic import BaseModel
@@ -6,7 +8,7 @@ from pydantic import BaseModel
 from braintodo.embedding.base import EmbeddingProvider
 from braintodo.graph.base import GraphStore
 from braintodo.models.edge import Edge, EdgeCreate, EdgeUpdate
-from braintodo.models.node import Node, NodeCreate, NodeUpdate
+from braintodo.models.node import Node, NodeCreate, NodeUpdate, RecurrenceRule
 
 T = TypeVar("T", bound=BaseModel)
 CreateT = TypeVar("CreateT", bound=BaseModel)
@@ -18,6 +20,23 @@ class Page(BaseModel, Generic[T]):  # noqa: UP046
     total: int
     skip: int
     limit: int
+
+
+def _advance_due_date(due_date: date, rule: RecurrenceRule) -> date:
+    """F028: the next occurrence's due_date, advanced from the just-completed
+    occurrence's due_date (not from "today") - a task due every Monday stays
+    anchored to Mondays even if completed late."""
+    if rule == "daily":
+        return date.fromordinal(due_date.toordinal() + 1)
+    if rule == "weekly":
+        return date.fromordinal(due_date.toordinal() + 7)
+    # monthly: same day-of-month next month, clamped to that month's last
+    # day (e.g. Jan 31 -> Feb 28/29) rather than overflowing into March.
+    month = due_date.month + 1
+    year = due_date.year + (month - 1) // 12
+    month = (month - 1) % 12 + 1
+    day = min(due_date.day, calendar.monthrange(year, month)[1])
+    return date(year, month, day)
 
 
 class BaseRepository(Generic[T, CreateT, UpdateT]):  # noqa: UP046
@@ -77,7 +96,30 @@ class NodeRepository(BaseRepository[Node, NodeCreate, NodeUpdate]):
         return Page(items=items, total=total, skip=skip, limit=limit)
 
     async def complete(self, id: str, owner_id: str) -> Node:
-        return await self._store.complete_node(id, owner_id)
+        node = await self._store.complete_node(id, owner_id)
+        # F028: only recur if there's a due_date to advance from - a
+        # recurrence_rule on a task with no due_date has nothing to compute
+        # the next occurrence relative to, so it's left as a one-off rather
+        # than guessed (e.g. recurring from "today").
+        if node.recurrence_rule is not None and node.due_date is not None:
+            next_due = _advance_due_date(node.due_date, node.recurrence_rule)
+            await self.create(
+                NodeCreate(
+                    title=node.title,
+                    content=node.content,
+                    tags=node.tags,
+                    weight=node.weight,
+                    color=node.color,
+                    shape=node.shape,
+                    size=node.size,
+                    node_type=node.node_type,
+                    due_date=next_due,
+                    priority=node.priority,
+                    recurrence_rule=node.recurrence_rule,
+                ),
+                owner_id,
+            )
+        return node
 
     async def reopen(self, id: str, owner_id: str) -> Node:
         return await self._store.reopen_node(id, owner_id)

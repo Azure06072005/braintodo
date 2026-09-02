@@ -2,6 +2,7 @@ from functools import lru_cache
 from typing import Any
 
 from fastapi import WebSocket
+from starlette.websockets import WebSocketDisconnect
 
 
 class ConnectionManager:
@@ -38,10 +39,15 @@ class ConnectionManager:
                 continue
             try:
                 await connection.send_json(message)
-            except Exception:  # noqa: BLE001
+            except (WebSocketDisconnect, RuntimeError):
                 # Client disconnected without a clean close handshake -
                 # drop it rather than letting one dead socket break the
-                # broadcast for everyone else.
+                # broadcast for everyone else. Deliberately NOT a bare
+                # `except Exception` (see Decisions.md, F027 session): that
+                # previously swallowed a real bug (non-JSON-serializable
+                # payload, e.g. a raw datetime) and silently misclassified
+                # it as a dead connection, hanging every caller waiting on
+                # the broadcast instead of surfacing the real error.
                 dead.append(connection)
         for connection in dead:
             self._connections.pop(connection, None)

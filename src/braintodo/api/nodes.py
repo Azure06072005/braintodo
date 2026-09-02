@@ -62,7 +62,7 @@ async def create_node(
     current_user: User = Depends(get_current_user),
 ) -> Node:
     node = await repo.create(data, str(current_user.id))
-    await manager.broadcast("node_created", node.model_dump(), str(current_user.id))
+    await manager.broadcast("node_created", node.model_dump(mode="json"), str(current_user.id))
     return node
 
 
@@ -101,7 +101,7 @@ async def update_node(
         node = await repo.update(node_id, data, str(current_user.id))
     except NodeNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
-    await manager.broadcast("node_updated", node.model_dump(), str(current_user.id))
+    await manager.broadcast("node_updated", node.model_dump(mode="json"), str(current_user.id))
     return node
 
 
@@ -116,7 +116,7 @@ async def complete_node(
         node = await repo.complete(node_id, str(current_user.id))
     except NodeNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
-    await manager.broadcast("node_updated", node.model_dump(), str(current_user.id))
+    await manager.broadcast("node_updated", node.model_dump(mode="json"), str(current_user.id))
     return node
 
 
@@ -131,7 +131,7 @@ async def reopen_node(
         node = await repo.reopen(node_id, str(current_user.id))
     except NodeNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
-    await manager.broadcast("node_updated", node.model_dump(), str(current_user.id))
+    await manager.broadcast("node_updated", node.model_dump(mode="json"), str(current_user.id))
     return node
 
 
