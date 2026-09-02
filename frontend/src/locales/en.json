@@ -18,7 +18,8 @@
     "api_error": "Could not reach the live API ({{error}}) — using sample data",
     "language_label": "Language",
     "view_2d": "2D",
-    "view_3d": "3D"
+    "view_3d": "3D",
+    "view_tasks": "Tasks"
   },
   "topology": {
     "compute_failed": "Could not compute topology: {{error}}"
@@ -61,5 +62,18 @@
     "saving": "Saving…",
     "submit_create": "Create link",
     "cancel": "Cancel"
+  },
+  "tasks": {
+    "title_today": "Tasks Today",
+    "due_label": "Due",
+    "priority_label": "Priority",
+    "repeats_label": "Repeats",
+    "complete_action": "✓ Complete",
+    "reopen_action": "Reopen task",
+    "overdue": "Overdue",
+    "created": "Created",
+    "completed": "Completed",
+    "avg_time": "Avg completion time",
+    "empty_today": "No tasks due today or overdue. Great job!"
   }
 }

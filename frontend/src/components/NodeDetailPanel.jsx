@@ -11,6 +11,12 @@ function relatedSuggestions(linkSuggestions, nodeId) {
   );
 }
 
+function isOverdue(dueDate, completedAt) {
+  if (!dueDate || completedAt) return false;
+  const today = new Date().toISOString().slice(0, 10);
+  return dueDate < today;
+}
+
 export default function NodeDetailPanel({
   node,
   clusters,
@@ -18,6 +24,8 @@ export default function NodeDetailPanel({
   allNodesById,
   onEdit,
   onDelete,
+  onComplete,
+  onReopen,
   topology,
   panelOpen, 
   onClosePanel,
@@ -71,6 +79,36 @@ export default function NodeDetailPanel({
       <p style={{ fontSize: 13, color: theme.textSecondary, lineHeight: 1.6 }}>
         {node.content || "(chưa có nội dung)"}
       </p>
+
+      {node.node_type === "task" && (
+        <Section title="Task">
+          <Row
+            label="Due"
+            value={node.due_date ? (
+              <span style={{ color: isOverdue(node.due_date, node.completed_at) ? theme.pulse : theme.textPrimary }}>
+                {node.due_date} {isOverdue(node.due_date, node.completed_at) ? "(Quá hạn)" : ""}
+              </span>
+            ) : "—"}
+          />
+          {node.priority && <Row label="Priority" value={node.priority} />}
+          {node.recurrence_rule && <Row label="Repeats" value={node.recurrence_rule} />}
+          <div style={{ marginTop: 8 }}>
+            <button
+              onClick={() => (node.completed_at ? onReopen?.(node) : onComplete?.(node))}
+              style={{
+                ...styles.actionBtn,
+                background: node.completed_at ? "transparent" : theme.depthColors[1],
+                color: node.completed_at ? theme.textSecondary : "#05070f",
+                fontWeight: 500,
+                width: "100%",
+                padding: "6px 0",
+              }}
+            >
+              {node.completed_at ? "Mở lại task" : "✓ Hoàn thành"}
+            </button>
+          </div>
+        </Section>
+      )}
 
       <Section title="Tags">
         {node.tags && node.tags.length > 0 ? (
@@ -165,7 +203,7 @@ function Row({ label, value }) {
   return (
     <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 3 }}>
       <span style={{ color: theme.textSecondary }}>{label}</span>
-      <span style={{ color: theme.textPrimary, fontFamily: "monospace" }}>{String(value)}</span>
+      <span style={{ color: theme.textPrimary, fontFamily: "monospace" }}>{value}</span>
     </div>
   );
 }

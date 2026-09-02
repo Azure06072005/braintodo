@@ -162,4 +162,84 @@ describe("NodeDetailPanel", () => {
     await user.click(screen.getByRole("button", { name: /đóng/i }));
     expect(onClosePanel).toHaveBeenCalledTimes(1);
   });
+
+  it("renders Task section for node_type='task' and handles complete/reopen", async () => {
+    const onComplete = vi.fn();
+    const onReopen = vi.fn();
+    const user = userEvent.setup();
+
+    const taskNode = {
+      ...baseNode,
+      node_type: "task",
+      due_date: "2026-12-31",
+      priority: "high",
+      recurrence_rule: "weekly",
+      completed_at: null,
+    };
+
+    const { rerender } = render(
+      <NodeDetailPanel
+        node={taskNode}
+        clusters={[]}
+        linkSuggestions={[]}
+        allNodesById={allNodesById}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onComplete={onComplete}
+        onReopen={onReopen}
+        topology={null}
+        panelOpen={true}
+        onClosePanel={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText(/task/i)).toBeInTheDocument();
+    expect(screen.getByText("2026-12-31")).toBeInTheDocument();
+    expect(screen.getByText("high")).toBeInTheDocument();
+    expect(screen.getByText("weekly")).toBeInTheDocument();
+
+    const completeBtn = screen.getByRole("button", { name: /hoàn thành/i });
+    await user.click(completeBtn);
+    expect(onComplete).toHaveBeenCalledWith(taskNode);
+
+    // Re-render as completed task
+    rerender(
+      <NodeDetailPanel
+        node={{ ...taskNode, completed_at: "2026-12-01T10:00:00Z" }}
+        clusters={[]}
+        linkSuggestions={[]}
+        allNodesById={allNodesById}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        onComplete={onComplete}
+        onReopen={onReopen}
+        topology={null}
+        panelOpen={true}
+        onClosePanel={vi.fn()}
+      />
+    );
+
+    const reopenBtn = screen.getByRole("button", { name: /mở lại task/i });
+    await user.click(reopenBtn);
+    expect(onReopen).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not render Task section for regular idea nodes", () => {
+    render(
+      <NodeDetailPanel
+        node={{ ...baseNode, node_type: "idea" }}
+        clusters={[]}
+        linkSuggestions={[]}
+        allNodesById={allNodesById}
+        onEdit={vi.fn()}
+        onDelete={vi.fn()}
+        topology={null}
+        panelOpen={true}
+        onClosePanel={vi.fn()}
+      />
+    );
+
+    expect(screen.queryByText(/^Task$/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /hoàn thành/i })).not.toBeInTheDocument();
+  });
 });

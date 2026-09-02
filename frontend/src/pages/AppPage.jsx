@@ -7,6 +7,9 @@ import PersonalizationPanel from "../components/PersonalizationPanel";
 import NodeForm from "../components/NodeForm";
 import EdgeForm from "../components/EdgeForm";
 import SearchBar from "../components/SearchBar";
+import TaskFilters from "../components/TaskFilters";
+import { applyTaskFilters } from "../tasks/filters";
+import DailyTaskView from "../components/DailyTaskView";
 import ImportExportControls from "../components/ImportExportControls";
 import { useGraphData } from "../hooks/useGraphData";
 import { useAuth } from "../hooks/useAuth";
@@ -29,7 +32,7 @@ export default function AppPage() {
   // (IS_DEV) purely so local development/testing doesn't require a live
   // backend running - see TopBar.jsx for the matching toggle visibility.
   const [source, setSource] = useState(IS_DEV ? "mock" : "live");
-  const [viewMode, setViewMode] = useState("2d"); // "2d" | "3d" (FE025)
+  const [viewMode, setViewMode] = useState("2d"); // "2d" | "3d" | "tasks" (FE025, FE030)
   const [selectedNodeId, setSelectedNodeId] = useState(null);
   const [modal, setModal] = useState(null);
   const [searchResult, setSearchResult] = useState(null);
@@ -39,6 +42,8 @@ export default function AppPage() {
   const [topologyLoading, setTopologyLoading] = useState(false);
   const [clusterOverlayEnabled, setClusterOverlayEnabled] = useState(false);
   const [panelOpen, setPanelOpen] = useState(false); // chỉ có ý nghĩa ở màn hình hẹp
+  const [taskFilters, setTaskFilters] = useState({ type: "all", status: "all", priority: "all" });
+  const [todayTasks, setTodayTasks] = useState([]);
 
   const {
     nodes,
@@ -51,6 +56,10 @@ export default function AppPage() {
     createNode,
     updateNode,
     deleteNode,
+    completeNode,
+    reopenNode,
+    tasksToday,
+    tasksSummary,
     createEdge,
     search,
     getTopology,
@@ -60,6 +69,8 @@ export default function AppPage() {
 
   const nodesById = useMemo(() => new Map(nodes.map((n) => [n.id, n])), [nodes]);
   const selectedNode = selectedNodeId ? nodesById.get(selectedNodeId) : null;
+
+  const visibleNodes = useMemo(() => applyTaskFilters(nodes, taskFilters), [nodes, taskFilters]);
 
   const highlightNodeIds = useMemo(
     () => (searchResult ? new Set(searchResult.subgraph_nodes.map((n) => n.id)) : null),
@@ -77,6 +88,22 @@ export default function AppPage() {
     await deleteNode(node.id);
     if (selectedNodeId === node.id) setSelectedNodeId(null);
   }
+
+  useEffect(() => {
+    if (viewMode === "tasks") {
+      let cancelled = false;
+      tasksToday()
+        .then((items) => {
+          if (!cancelled) setTodayTasks(items);
+        })
+        .catch(() => {
+          if (!cancelled) setTodayTasks([]);
+        });
+      return () => {
+        cancelled = true;
+      };
+    }
+  }, [viewMode, tasksToday, nodes]);
 
   useEffect(() => {
     if (!topologyEnabled) {
@@ -147,7 +174,19 @@ export default function AppPage() {
         extraActions={<ImportExportControls onExport={exportGraph} onImport={importGraph} />}
       />
 
-      <div style={{ padding: "10px 16px", borderBottom: `1px solid ${theme.panelBorder}`, background: "rgba(13, 16, 32, 0.4)", backdropFilter: "blur(6px)" }}>
+      <div
+        style={{
+          padding: "10px 16px",
+          borderBottom: `1px solid ${theme.panelBorder}`,
+          background: "rgba(13, 16, 32, 0.4)",
+          backdropFilter: "blur(6px)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: 10,
+        }}
+      >
         <SearchBar
           onSearch={handleSearch}
           onClear={() => setSearchResult(null)}
@@ -155,11 +194,28 @@ export default function AppPage() {
           result={searchResult}
           searching={searching}
         />
+        <TaskFilters filters={taskFilters} onChange={setTaskFilters} />
       </div>
 
       <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
-        <div style={{ flex: 1, position: "relative" }}>
-          {viewMode === "3d" ? (
+        <div style={{ flex: 1, position: "relative", overflow: viewMode === "tasks" ? "auto" : "hidden" }}>
+          {viewMode === "tasks" ? (
+            <DailyTaskView
+              tasks={todayTasks}
+              fetchSummary={tasksSummary}
+              onCompleteNode={async (task) => {
+                await completeNode(task.id);
+              }}
+              onReopenNode={async (task) => {
+                await reopenNode(task.id);
+              }}
+              onSelectNode={(task) => {
+                setSelectedNodeId(task.id);
+                setPanelOpen(true);
+              }}
+              selectedNodeId={selectedNodeId}
+            />
+          ) : viewMode === "3d" ? (
             <Suspense
               fallback={
                 <div
@@ -177,7 +233,7 @@ export default function AppPage() {
               }
             >
               <GraphCanvas3D
-                nodes={nodes}
+                nodes={visibleNodes}
                 edges={edges}
                 onNodeClick={handleNodeClickOnCanvas}
                 selectedNodeId={selectedNodeId}
@@ -186,7 +242,7 @@ export default function AppPage() {
             </Suspense>
           ) : (
             <GraphCanvas
-              nodes={nodes}
+              nodes={visibleNodes}
               edges={edges}
               onNodeClick={handleNodeClickOnCanvas}
               selectedNodeId={selectedNodeId}
@@ -205,6 +261,12 @@ export default function AppPage() {
           allNodesById={nodesById}
           onEdit={(node) => setModal({ type: "edit-node", node })}
           onDelete={handleDeleteNode}
+          onComplete={async (node) => {
+            await completeNode(node.id);
+          }}
+          onReopen={async (node) => {
+            await reopenNode(node.id);
+          }}
           topology={topology}
           panelOpen={panelOpen}
           onClosePanel={() => setPanelOpen(false)}

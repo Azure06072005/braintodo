@@ -18,7 +18,8 @@
     "api_error": "本番APIに接続できません ({{error}}) — サンプルデータを使用中",
     "language_label": "言語",
     "view_2d": "2D",
-    "view_3d": "3D"
+    "view_3d": "3D",
+    "view_tasks": "タスク"
   },
   "topology": {
     "compute_failed": "トポロジーを計算できませんでした: {{error}}"
@@ -61,5 +62,18 @@
     "saving": "保存中…",
     "submit_create": "リンクを作成",
     "cancel": "キャンセル"
+  },
+  "tasks": {
+    "title_today": "今日のタスク",
+    "due_label": "期限",
+    "priority_label": "優先度",
+    "repeats_label": "繰り返し",
+    "complete_action": "✓ 完了",
+    "reopen_action": "タスクを再開",
+    "overdue": "期限超過",
+    "created": "作成",
+    "completed": "完了",
+    "avg_time": "平均処理時間",
+    "empty_today": "今日が期限のタスクや遅延しているタスクはありません。"
   }
 }

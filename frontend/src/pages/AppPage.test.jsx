@@ -216,4 +216,18 @@ describe("AppPage", () => {
     expect(screen.getByTestId("graph-canvas-stub")).toBeInTheDocument();
     expect(screen.queryByTestId("graph-canvas-3d")).not.toBeInTheDocument();
   });
+
+  it("toggling to Tasks view mode renders DailyTaskView", async () => {
+    const user = userEvent.setup();
+    render(<AppPage />);
+    await waitFor(() => screen.getByTestId("node-count"));
+
+    await user.click(screen.getByRole("button", { name: "Nhiệm vụ" }));
+
+    expect(screen.queryByTestId("graph-canvas-stub")).not.toBeInTheDocument();
+    expect(screen.getByText(/danh sách nhiệm vụ hôm nay/i)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "2D" }));
+    expect(screen.getByTestId("graph-canvas-stub")).toBeInTheDocument();
+  });
 });

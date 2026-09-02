@@ -202,6 +202,94 @@ export function useGraphData(source, apiBaseUrl = DEFAULT_API_BASE_URL, token = 
     [source, nodes, edges, client]
   );
 
+  const completeNode = useCallback(
+    async (nodeId) => {
+      if (source === "mock") {
+        let updated = null;
+        setNodes((prev) => {
+          const target = prev.find((n) => n.id === nodeId);
+          if (!target) return prev;
+          updated = { ...target, completed_at: new Date().toISOString() };
+          const result = prev.map((n) => (n.id === nodeId ? updated : n));
+          if (target.recurrence_rule && target.due_date) {
+            const d = new Date(target.due_date);
+            if (target.recurrence_rule === "daily") d.setDate(d.getDate() + 1);
+            else if (target.recurrence_rule === "weekly") d.setDate(d.getDate() + 7);
+            else if (target.recurrence_rule === "monthly") d.setMonth(d.getMonth() + 1);
+            result.push({
+              ...target,
+              id: crypto.randomUUID(),
+              due_date: d.toISOString().slice(0, 10),
+              completed_at: null,
+              created_at: new Date().toISOString(),
+            });
+          }
+          return result;
+        });
+        return updated;
+      }
+      const node = await client.completeNode(nodeId);
+      setNodes((prev) => upsertById(prev, node));
+      return node;
+    },
+    [source, client]
+  );
+
+  const reopenNode = useCallback(
+    async (nodeId) => {
+      if (source === "mock") {
+        let updated = null;
+        setNodes((prev) =>
+          prev.map((n) => {
+            if (n.id !== nodeId) return n;
+            updated = { ...n, completed_at: null };
+            return updated;
+          })
+        );
+        return updated;
+      }
+      const node = await client.reopenNode(nodeId);
+      setNodes((prev) => upsertById(prev, node));
+      return node;
+    },
+    [source, client]
+  );
+
+  const tasksToday = useCallback(async () => {
+    if (source === "mock") {
+      const today = new Date().toISOString().slice(0, 10);
+      return nodes.filter(
+        (n) => n.node_type === "task" && !n.completed_at && n.due_date && n.due_date <= today
+      );
+    }
+    return client.tasksToday();
+  }, [source, nodes, client]);
+
+  const tasksSummary = useCallback(
+    async (dateStr) => {
+      if (source === "mock") {
+        const targetDate = dateStr || new Date().toISOString().slice(0, 10);
+        const tasks = nodes.filter((n) => n.node_type === "task");
+        const created = tasks.filter((n) => (n.created_at || "").slice(0, 10) === targetDate);
+        const completed = tasks.filter(
+          (n) => n.completed_at && n.completed_at.slice(0, 10) === targetDate
+        );
+        const overdue = tasks.filter(
+          (n) => !n.completed_at && n.due_date && n.due_date < targetDate
+        );
+        return {
+          date: targetDate,
+          created: created.length,
+          completed: completed.length,
+          overdue: overdue.length,
+          avg_completion_seconds: null,
+        };
+      }
+      return client.tasksSummary(dateStr);
+    },
+    [source, nodes, client]
+  );
+
   const createEdge = useCallback(
     async (data) => {
       if (source === "mock") {
@@ -346,6 +434,10 @@ export function useGraphData(source, apiBaseUrl = DEFAULT_API_BASE_URL, token = 
       createEdge,
       updateEdge,
       deleteEdge,
+      completeNode,
+      reopenNode,
+      tasksToday,
+      tasksSummary,
       search,
       getTopology,
       exportGraph,
@@ -362,6 +454,10 @@ export function useGraphData(source, apiBaseUrl = DEFAULT_API_BASE_URL, token = 
       createNode,
       updateNode,
       deleteNode,
+      completeNode,
+      reopenNode,
+      tasksToday,
+      tasksSummary,
       createEdge,
       updateEdge,
       deleteEdge,

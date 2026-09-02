@@ -21,10 +21,10 @@ export function createApiClient(baseUrl, token) {
     const resp = await fetch(`${baseUrl}${path}`, {
       method,
       headers: {
-        "Content-Type": "application/json",
+        ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
         ...(effectiveToken ? { Authorization: `Bearer ${effectiveToken}` } : {}),
       },
-      body: JSON.stringify(body),
+      body: body !== undefined ? JSON.stringify(body) : undefined,
     });
     if (!resp.ok) {
       const detail = await resp.json().catch(() => null);
@@ -36,8 +36,9 @@ export function createApiClient(baseUrl, token) {
   }
 
   return {
-    async listNodes({ skip = 0, limit = 200 } = {}) {
-      const page = await getJson(`/nodes?skip=${skip}&limit=${limit}`);
+    async listNodes({ skip = 0, limit = 200, type } = {}) {
+      const typeParam = type ? `&type=${type}` : "";
+      const page = await getJson(`/nodes?skip=${skip}&limit=${limit}${typeParam}`);
       return page.items; // backend trả Page[Node]: {items, total, skip, limit}
     },
 
@@ -71,6 +72,24 @@ export function createApiClient(baseUrl, token) {
     },
     async deleteNode(nodeId) {
       return sendJson("DELETE", `/nodes/${nodeId}`);
+    },
+    async completeNode(nodeId) {
+      return sendJson("PATCH", `/nodes/${nodeId}/complete`);
+    },
+    async reopenNode(nodeId) {
+      return sendJson("PATCH", `/nodes/${nodeId}/reopen`);
+    },
+    async completeTask(nodeId) {
+      return sendJson("PATCH", `/nodes/${nodeId}/complete`);
+    },
+    async reopenTask(nodeId) {
+      return sendJson("PATCH", `/nodes/${nodeId}/reopen`);
+    },
+    async tasksToday() {
+      return getJson("/tasks/today");
+    },
+    async tasksSummary(date) {
+      return getJson(`/tasks/summary?date=${date}`);
     },
 
     // --- Edge mutations (khớp đúng api/edges.py thật: 400 nếu source/target không tồn tại) ---

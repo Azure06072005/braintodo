@@ -93,6 +93,13 @@ export default function TopBar({
             >
               {t("topbar.view_3d")}
             </button>
+            <button
+              className="bt-btn"
+              onClick={() => onViewModeChange("tasks")}
+              style={viewMode === "tasks" ? styles.toggleActive : styles.toggle}
+            >
+              {t("topbar.view_tasks")}
+            </button>
           </div>
         )}
 

@@ -18,7 +18,8 @@
     "api_error": "Không nối được API thật ({{error}}) — đang dùng dữ liệu mẫu",
     "language_label": "Ngôn ngữ",
     "view_2d": "2D",
-    "view_3d": "3D"
+    "view_3d": "3D",
+    "view_tasks": "Nhiệm vụ"
   },
   "topology": {
     "compute_failed": "Không tính được topology: {{error}}"
@@ -61,5 +62,18 @@
     "saving": "Đang lưu…",
     "submit_create": "Tạo liên kết",
     "cancel": "Huỷ"
+  },
+  "tasks": {
+    "title_today": "Nhiệm vụ hôm nay",
+    "due_label": "Hạn",
+    "priority_label": "Ưu tiên",
+    "repeats_label": "Lặp lại",
+    "complete_action": "✓ Hoàn thành",
+    "reopen_action": "Mở lại task",
+    "overdue": "Quá hạn",
+    "created": "Tạo mới",
+    "completed": "Đã xong",
+    "avg_time": "Thời gian xử lý TB",
+    "empty_today": "Không có nhiệm vụ nào cần làm hôm nay hoặc quá hạn. Tuyệt vời!"
   }
 }

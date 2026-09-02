@@ -74,13 +74,38 @@ class ClusterService:
         node_ids = list(nodes_by_id.keys())
 
         if not _HAS_LEIDEN or ig is None or la is None:
-            return [
-                Cluster(
-                    cluster_id=0,
-                    node_ids=sorted(node_ids),
-                    label=nodes[0].title if nodes else None,
-                )
-            ]
+            adj: dict[str, set[str]] = {nid: set() for nid in node_ids}
+            for e in edges:
+                if e.source_id in adj and e.target_id in adj:
+                    adj[e.source_id].add(e.target_id)
+                    adj[e.target_id].add(e.source_id)
+
+            visited = set()
+            clusters = []
+            c_id = 0
+            for nid in sorted(node_ids):
+                if nid not in visited:
+                    comp = []
+                    queue = [nid]
+                    visited.add(nid)
+                    while queue:
+                        curr = queue.pop(0)
+                        comp.append(curr)
+                        for neighbor in sorted(adj[curr]):
+                            if neighbor not in visited:
+                                visited.add(neighbor)
+                                queue.append(neighbor)
+                    member_ids = sorted(comp)
+                    members = [nodes_by_id[mid] for mid in member_ids]
+                    clusters.append(
+                        Cluster(
+                            cluster_id=c_id,
+                            node_ids=member_ids,
+                            label=_label_for_community(members),
+                        )
+                    )
+                    c_id += 1
+            return clusters
 
         graph = ig.Graph()
         graph.add_vertices(node_ids)
