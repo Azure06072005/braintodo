@@ -3,6 +3,44 @@
 Update this at the end of every session (Principle 5 & 12). This is what the
 next session reads to avoid starting from zero.
 
+## Session — 2026-09-01 (F027 + F028: Task summary, recurrence engine, and a real broadcast bug fixed)
+- Completed:
+  - F027: `GET /tasks/summary?date=YYYY-MM-DD` (new `src/braintodo/models/task.py`,
+    endpoint in `api/tasks.py`). 7 new tests.
+  - F028: recurrence engine - completing a `recurrence_rule`+`due_date` task
+    auto-creates the next occurrence via the full `NodeRepository.create()`
+    path (`_advance_due_date()` helper in `graph/repository.py`). 7 new tests.
+  - **Found and fixed a real bug, not introduced by F027/F028 but only
+    surfaced by them**: `Node.created_at` (added earlier for F024, unused
+    until F027 needed it) is always non-null, so every `node_created`
+    broadcast started carrying a raw `datetime` into
+    `ConnectionManager.broadcast()`'s `send_json()` call. That raised
+    `TypeError`, which an overly-broad `except Exception` silently
+    misclassified as "client disconnected" - so `test_realtime_api.py` hung
+    forever instead of failing. Root-caused via `pytest-timeout`'s stack
+    dump (thanks to it, not luck). Fixed by using
+    `model_dump(mode="json")` at every broadcast call site
+    (`nodes.py`/`edges.py`/`graph.py`) and narrowing the manager's except
+    clause to the real dead-connection exception types, so a future bug
+    like this fails loud instead of hanging silently. Full writeup in
+    `Decisions.md`.
+  - Flipped F027 and F028 to `passing` in `Harness/be_feature_list.json`;
+    id-integrity check passed (28 unique ids, no dupes).
+- Verification evidence:
+  - Fast suite: 124 -> 138 passed. Full suite: 148 -> 162 passed, 1 skipped
+    (explicitly re-ran `test_realtime_api.py` in isolation to confirm the
+    hang is gone before trusting the full-suite green).
+  - `ruff check .` clean. `mypy src tests` -> 0 errors, 89 files.
+- Not done / flagged for a future session:
+  - Same standing Neo4j-live-instance caveat as F024/F025/F026.
+  - `ConnectionManager.broadcast()`'s exception narrowing was based on the
+    two exception types actually observed/expected for a dead Starlette
+    WebSocket in this codebase - if a different edge case turns up dead
+    connections raising something else, that needs adding, not reverting
+    back to a bare `except Exception`.
+- Next session: all P0/P1/P2 backend task features (F024-F028) are now
+  `passing`. Frontend task-layer work (FE028-FE031) is unblocked.
+
 ## Session — 2026-09-01 (F026: Daily task query)
 - Completed:
   - New `GET /tasks/today` in `src/braintodo/api/tasks.py` (new router,

@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -61,3 +61,10 @@ class Node(BaseModel):
     priority: TaskPriority | None = None
     completed_at: datetime | None = None
     recurrence_rule: RecurrenceRule | None = None
+    # F027: not settable via NodeCreate/NodeUpdate - stamped once at
+    # creation by the default_factory below, so every existing create_node()
+    # call site (which never passes created_at explicitly) gets a real
+    # timestamp with zero call-site changes, and every read path that
+    # reconstructs a Node from already-persisted data (which does include
+    # created_at) uses the stored value rather than a fresh one.
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))

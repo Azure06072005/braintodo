@@ -266,6 +266,38 @@
         }
       ],
       "evidence": "Verified on the same fresh clone as F024/F025. New src/braintodo/api/tasks.py, registered in main.py (import + tags_metadata entry + include_router), reuses the existing get_store/get_current_user dependencies rather than inventing new wiring. Filters via GraphStore.list_nodes (unpaginated, in-memory filter) rather than a new Cypher query shape - acceptable at the \"today\" working-set scale, documented as a scope note in the function docstring for a future session to revisit if it becomes a bottleneck. 7 new tests in tests/test_tasks_api.py: excludes idea-nodes, includes overdue+due-today, excludes future-dated and no-due-date tasks, excludes completed tasks (exercises F025), owner scoping, and 401 without auth. Test dates computed relative to datetime.now(UTC).date() rather than hardcoded, so the suite does not silently start failing on a future run date. Fast suite: 117 -> 124 passed. Full suite: 141 -> 148 passed, 1 skipped. ruff check . -> clean (caught and fixed DTZ011 naive date.today() usage in both the implementation and the tests mid-session, replaced with datetime.now(UTC).date()). mypy src tests -> 0 errors, 87 files."
+    },
+    {
+      "id": "F027",
+      "name": "Daily/period task summary",
+      "behavior": "GET /tasks/summary?date=YYYY-MM-DD returns {date, completed, created, overdue, avg_completion_seconds} for the caller's task-nodes, owner-scoped. 'created'/'completed' are counts whose created_at/completed_at falls on that calendar date (UTC); 'overdue' is a live count of currently-uncompleted tasks whose due_date is strictly before that date (not a historical reconstruction of what was overdue that day - see Decisions.md); avg_completion_seconds is null when nothing completed that day.",
+      "verification": "pytest tests/test_tasks_api.py -x",
+      "state": "passing",
+      "priority": "P1",
+      "layer": "backend",
+      "depends_on": [
+        {
+          "id": "F026",
+          "layer": "backend"
+        }
+      ],
+      "evidence": "New TaskSummary response model in src/braintodo/models/task.py; GET /tasks/summary added to src/braintodo/api/tasks.py. Required Node.created_at (present on the model from earlier F024 work but previously unexercised by any test) to compute the 'created' count and avg_completion_seconds. 7 new tests in tests/test_tasks_api.py: created-count (task-only, excludes idea-nodes), completed-count + non-null avg on completion, overdue counting, overdue exclusion once completed, owner scoping, missing required ?date= -> 422, and 401 without auth. Fast suite: 124 -> 138 passed (includes F028's tests, developed in the same session - see F028 entry). Full suite: 148 -> 162 passed, 1 skipped. ruff check . -> clean. mypy src tests -> 0 errors, 89 files."
+    },
+    {
+      "id": "F028",
+      "name": "Task recurrence engine",
+      "behavior": "On PATCH /nodes/{id}/complete for a task-node with a non-null recurrence_rule ('daily'|'weekly'|'monthly') AND a non-null due_date, a new task-node is auto-created via the normal NodeRepository.create() path (so it gets a real embedding like any other node) with due_date advanced from the completed occurrence's due_date (not from 'today'), copying title/content/tags/weight/color/shape/size/priority/recurrence_rule/node_type. Monthly advancement clamps to the target month's real last day. A recurrence_rule with no due_date creates nothing (nothing to anchor the next date to).",
+      "verification": "pytest tests/test_task_recurrence.py -x",
+      "state": "passing",
+      "priority": "P2",
+      "layer": "backend",
+      "depends_on": [
+        {
+          "id": "F025",
+          "layer": "backend"
+        }
+      ],
+      "evidence": "Added _advance_due_date() helper and recurrence hook in NodeRepository.complete() in src/braintodo/graph/repository.py. 7 new tests in tests/test_task_recurrence.py: daily/weekly/monthly advancement (including a month-end clamp case, Jan 31 -> Feb 28 non-leap-year), non-recurring tasks create nothing, recurring-with-no-due_date creates nothing, idea-nodes never recur, plus a direct unit test of the _advance_due_date helper (including a leap-year case). IMPORTANT - this session also found and fixed a real, independent bug while running the full suite: adding F024's Node.created_at field (always non-null, unlike the other optional task fields) meant every node_created broadcast now carried a raw datetime into ConnectionManager.broadcast(), which json-serializes for the WebSocket send; the resulting TypeError was being silently swallowed by an overly-broad except Exception and misclassified as a dead client, hanging test_realtime_api.py's assertions forever instead of failing. Fixed by using model_dump(mode='json') at every broadcast call site (nodes.py, edges.py, graph.py) and narrowing ConnectionManager.broadcast()'s except clause to the actual dead-connection exception types. Full incident writeup in Decisions.md. Fast suite: 124 -> 138 passed. Full suite: 148 -> 162 passed, 1 skipped (includes re-verifying test_realtime_api.py no longer hangs). ruff check . -> clean. mypy src tests -> 0 errors, 89 files."
     }
   ]
 }
